@@ -24,6 +24,19 @@ const pool = new Pool({
 });
 
 app.set("trust proxy", 1);
+const FRONTEND_ORIGIN = "https://dhrutivirani907-blip.github.io";
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin === FRONTEND_ORIGIN) {
+    res.setHeader("Access-Control-Allow-Origin", FRONTEND_ORIGIN);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 app.use(express.json({ limit: "30kb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
@@ -37,7 +50,7 @@ function tokenFor(payload) {
 function setSession(res, payload) {
   res.cookie("zoi_session", tokenFor(payload), {
     httpOnly: true, secure: process.env.NODE_ENV === "production",
-    sameSite: "lax", maxAge: 30 * 24 * 60 * 60 * 1000
+    sameSite: "none", maxAge: 30 * 24 * 60 * 60 * 1000
   });
 }
 function requireUser(req, res, next) {
@@ -120,7 +133,7 @@ app.post("/api/login", authLimiter, async (req, res) => {
     delete u.password_hash; res.json({ user: u });
   } catch (e) { console.error(e); res.status(500).json({ error: "Login failed." }); }
 });
-app.post("/api/logout", (req, res) => { res.clearCookie("zoi_session"); res.json({ ok: true }); });
+app.post("/api/logout", (req, res) => { res.clearCookie("zoi_session", { httpOnly: true, secure: true, sameSite: "none" }); res.json({ ok: true }); });
 app.get("/api/me", requireUser, async (req, res) => {
   const r = await pool.query("SELECT id,name,email,credits FROM users WHERE id=$1", [req.user.id]);
   if (!r.rowCount) return res.status(401).json({ error: "Account not found." });
