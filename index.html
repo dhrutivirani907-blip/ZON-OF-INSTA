@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff"><title>ZON OF INSTA</title>
+<style>
+:root{--pink:#ed168e;--purple:#7028df;--orange:#ff7a18;--ink:#17121f;--muted:#77717d;--line:#eee8f1;--bg:#fff}
+*{box-sizing:border-box}body{margin:0;background:#faf8fc;color:var(--ink);font-family:Inter,system-ui,-apple-system,Arial,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;border:0}.app{max-width:520px;margin:auto;min-height:100vh;background:white;position:relative;padding:22px 18px 36px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}.brand{font-weight:950;letter-spacing:-1px;font-size:23px}.brand span{background:linear-gradient(90deg,var(--purple),var(--pink),var(--orange));background-clip:text;color:transparent}.avatar{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--purple),var(--pink),var(--orange));color:white;display:grid;place-items:center;font-weight:900}
+h1{font-size:28px;letter-spacing:-1px;margin:8px 0}.sub{color:var(--muted);font-size:13px}.balance{position:relative;overflow:hidden;border-radius:25px;padding:22px;color:#fff;background:linear-gradient(125deg,#5e22d4 0%,#c018a9 55%,#ff781c 100%);box-shadow:0 14px 34px #9b3bc52b}
+.balance:after{content:"";position:absolute;width:190px;height:190px;border:1px solid #ffffff55;border-radius:50%;right:-60px;top:-90px;box-shadow:0 0 0 18px #ffffff0c,0 0 0 38px #ffffff0c}
+.balance-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1}.coin{width:56px;height:56px;object-fit:contain;border-radius:50%;background:#000;padding:2px}.balance-label{font-size:12px;opacity:.85}.balance-num{font-size:30px;font-weight:900;letter-spacing:-1px;margin-top:3px}.balance-foot{font-size:12px;margin-top:15px;opacity:.9}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:17px}.action{background:#fff;border:1px solid var(--line);border-radius:21px;padding:18px 14px;text-align:left;box-shadow:0 7px 22px #35104c0a;transition:.2s}.action:active{transform:scale(.97)}.action .ico{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:22px;color:white;background:linear-gradient(135deg,var(--purple),var(--pink))}.action:nth-child(2) .ico{background:linear-gradient(135deg,var(--orange),var(--pink))}.action b{display:block;margin-top:14px;font-size:15px}.action small{display:block;color:var(--muted);margin-top:5px;font-size:11px;line-height:1.4}
+.page{display:none}.page.active{display:block}.back{background:#f4eef8;border-radius:12px;padding:10px 14px;color:#4d2865;font-weight:700;margin:0 0 18px}.panel{border:1px solid var(--line);border-radius:22px;padding:18px;background:#fff;box-shadow:0 8px 28px #29143b0a;margin-top:16px}.panel h3{margin:0 0 8px}.primary{width:100%;padding:15px 18px;border-radius:15px;color:white;font-weight:850;background:linear-gradient(100deg,var(--purple),var(--pink),var(--orange));box-shadow:0 8px 20px #c32b9b26}.notice{background:#fff4e9;border:1px solid #ffdfc4;color:#9a4b0b;padding:15px;border-radius:16px;font-weight:750;font-size:13px;line-height:1.5;margin-top:17px}.muted{color:var(--muted);font-size:12px}.field{margin:14px 0}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:7px}.field input,.field select{width:100%;padding:14px;border:1px solid #e7dfea;border-radius:13px;background:#fff;outline:none}.field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 3px #ed168e15}.amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.amount{border:1px solid #eadfec;background:#fff;padding:12px 4px;border-radius:12px;font-weight:800;color:#5c4263}.amount.selected{background:#fff0f8;border:2px solid var(--pink);color:#c01885}
+.history-item{padding:14px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border:0}.status{font-size:10px;font-weight:900;text-transform:uppercase;border-radius:20px;padding:6px 9px;background:#fff4db;color:#9a6500}.status.completed{background:#e7faef;color:#168447}.status.rejected{background:#ffe9ed;color:#bd2345}
+.modal{position:fixed;inset:0;background:#160d20a8;z-index:20;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}.modal.show{display:flex}.modal-card{width:min(390px,100%);background:#fff;border-radius:26px;padding:26px;text-align:center;box-shadow:0 25px 90px #0004}.modal-card h2{margin:13px 0 7px}.modal-card p{color:#77717d;font-size:13px;line-height:1.5}.ring{width:68px;height:68px;margin:2px auto 17px;border-radius:50%;border:6px solid #f5d9ee;border-top-color:var(--pink);border-right-color:var(--orange);animation:spin 1s linear infinite;box-shadow:0 0 20px #ed168e30}@keyframes spin{to{transform:rotate(360deg)}}.web{position:absolute;right:8px;top:8px;width:80px;height:80px;pointer-events:none}.web svg{width:100%;height:100%;overflow:visible}.web path{fill:none;stroke:#d7c2dc;stroke-width:1}.web .insta{fill:url(#ig);stroke:white;stroke-width:2;animation:swing 2.4s ease-in-out infinite;transform-origin:72px 68px}@keyframes swing{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+.auth{max-width:420px;margin:10vh auto;padding:25px}.auth-logo{text-align:center;font-size:31px;font-weight:950;margin-bottom:22px}.auth-logo span{background:linear-gradient(90deg,var(--purple),var(--pink),var(--orange));background-clip:text;color:transparent}.tabs{display:flex;background:#f6f0f7;border-radius:14px;padding:4px;margin-bottom:18px}.tabs button{flex:1;padding:11px;border-radius:11px;background:transparent;font-weight:800;color:#75677b}.tabs button.on{background:white;color:#b31b9a;box-shadow:0 2px 9px #27102b12}
+.toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,20px);background:#21162a;color:white;border-radius:13px;padding:12px 17px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:600px){body{padding:22px 0}.app{border-radius:28px;min-height:calc(100vh - 44px);box-shadow:0 12px 55px #2b14301a}}
+</style></head>
+<body>
+<div id="auth" class="auth" style="display:none">
+ <div class="auth-logo"><span>ZON OF INSTA</span></div>
+ <div class="panel">
+  <div class="tabs"><button id="loginTab" class="on" onclick="setAuth('login')">LOGIN</button><button id="signupTab" onclick="setAuth('signup')">SIGN UP</button></div>
+  <div id="nameField" class="field" style="display:none"><label>YOUR NAME</label><input id="name" placeholder="Enter your name" maxlength="60"></div>
+  <div class="field"><label>EMAIL ADDRESS</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+  <div class="field"><label>PASSWORD</label><input id="password" type="password" placeholder="Minimum 8 characters" autocomplete="current-password"></div>
+  <button class="primary" id="authSubmit" onclick="submitAuth()">LOGIN & CONTINUE</button>
+  <p class="muted" style="text-align:center;margin:14px 0 0">Your account is securely checked with our server.</p>
+ </div>
+</div>
+<div id="app" class="app" style="display:none">
+ <header><div class="brand"><span>ZON OF INSTA</span></div><button class="avatar" onclick="logout()" title="Logout">Z</button></header>
+ <section id="home" class="page active">
+  <h1>Welcome back 👋</h1><p class="sub">Your promotion credits at a glance.</p>
+  <div class="balance"><div class="balance-top"><img class="coin" src="/view-coin.png" onerror="this.style.display='none'"><div><div class="balance-label">TOTAL VIEW CREDITS</div><div class="balance-num" id="homeCredits">0</div></div></div><div class="balance-foot">Your available promotion credits</div></div>
+  <div class="cards">
+   <button class="action" onclick="showPage('watch')"><span class="ico">▶</span><b>Watch & Get Credits</b><small>Watch an ad and earn 20 credits</small></button>
+   <button class="action" onclick="showPage('redeem')"><span class="ico">↗</span><b>Redeem Your Reward</b><small>Submit a promotion request</small></button>
+  </div>
+  <div class="panel"><h3>How it works</h3><p class="muted">Earn credits by completing eligible ad sessions, then submit an Instagram Reel promotion request. Requests are reviewed by our team.</p></div>
+  <button class="action" style="width:100%;margin-top:13px" onclick="showPage('history')"><b>▤ &nbsp; Request History</b><small>Track pending, completed and rejected requests</small></button>
+ </section>
+ <section id="watch" class="page"><button class="back" onclick="showPage('home')">← Back</button><h1>Watch & Get Credits</h1><p class="sub">Complete the ad session to earn credits.</p>
+  <div class="balance"><div class="balance-label">TOTAL VIEW CREDITS</div><div class="balance-num" id="watchCredits">0</div></div>
+  <div class="panel"><h3>Earn 20 credits</h3><p class="muted">Open the sponsor page and keep this app open for at least 8 seconds. Reward is validated by the server.</p><button class="primary" id="watchButton" onclick="watchAd()">WATCH 8 SECOND AD · GET 20</button></div>
+  <div class="notice">WATCH EVERY AD FOR A MINIMUM OF 8 SECONDS TO RECEIVE YOUR REWARD.</div>
+ </section>
+ <section id="redeem" class="page"><button class="back" onclick="showPage('home')">← Back</button><h1>Redeem Your Reward</h1><p class="sub">Create a new promotion request.</p>
+  <div class="balance"><div class="balance-label">AVAILABLE CREDITS</div><div class="balance-num" id="redeemCredits">0</div></div>
+  <div class="panel" style="position:relative;overflow:hidden;padding-top:75px">
+   <div class="web"><svg viewBox="0 0 100 100"><defs><linearGradient id="ig" x1="0" x2="1" y1="1" y2="0"><stop stop-color="#ff8a00"/><stop offset=".5" stop-color="#ed168e"/><stop offset="1" stop-color="#7028df"/></linearGradient></defs><path d="M4 4L95 95M95 4L4 95M50 0V100M0 50H100M15 15Q50 28 85 15M15 85Q50 72 85 85M15 15Q28 50 15 85M85 15Q72 50 85 85"/><g class="insta"><rect x="58" y="55" width="28" height="28" rx="8"/><rect x="64" y="61" width="16" height="16" rx="5" fill="none"/><circle cx="72" cy="69" r="4" fill="none"/><circle cx="80" cy="62" r="1.5" fill="white" stroke="none"/></g></svg></div>
+   <h3>Select credit amount</h3><div class="amounts" id="amounts"></div>
+   <div class="field" style="margin-top:20px"><label>ENTER YOUR INSTAGRAM REEL LINK</label><input id="reelUrl" type="url" placeholder="https://www.instagram.com/reel/..."></div>
+   <button class="primary" onclick="sendRequest()">SUBMIT PROMOTION REQUEST</button>
+   <p class="muted">Selected credits are reserved while your request is pending. Rejected requests are refunded automatically.</p>
+  </div>
+ </section>
+ <section id="history" class="page"><button class="back" onclick="showPage('home')">← Back</button><h1>Request History</h1><p class="sub">Your submitted requests and their latest status.</p><div class="panel" id="historyList"><p class="muted">Loading history…</p></div></section>
+</div>
+<div class="modal" id="verifyModal"><div class="modal-card"><div class="ring"></div><h2>Checking your account</h2><p>Please wait, we will check your account validity.</p></div></div>
+<div class="modal" id="messageModal"><div class="modal-card"><div id="messageIcon" style="font-size:38px">✓</div><h2 id="messageTitle">Success</h2><p id="messageText"></p><button class="primary" onclick="closeMessage()">CLOSE</button></div></div>
+<div class="toast" id="toast"></div>
+<script>
+let authMode='login', selectedAmount=1000, adSessionId=null, currentCredits=0, adUrl='';
+const $=id=>document.getElementById(id);
+async function api(url,opts={}){const r=await fetch(url,{...opts,credentials:'same-origin',headers:{'Content-Type':'application/json',...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Server error'}));if(!r.ok)throw Error(d.error||'Request failed');return d}
+function toast(s){$('toast').textContent=s;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800)}
+function setAuth(mode){authMode=mode;$('loginTab').classList.toggle('on',mode==='login');$('signupTab').classList.toggle('on',mode==='signup');$('nameField').style.display=mode==='signup'?'block':'none';$('authSubmit').textContent=mode==='login'?'LOGIN & CONTINUE':'CREATE ACCOUNT';$('password').autocomplete=mode==='login'?'current-password':'new-password'}
+async function submitAuth(){try{const body={email:$('email').value.trim(),password:$('password').value};if(authMode==='signup')body.name=$('name').value.trim();await api('/api/'+(authMode==='login'?'login':'signup'),{method:'POST',body:JSON.stringify(body)});await enterApp()}catch(e){toast(e.message)}}
+function showVerify(){ $('verifyModal').classList.add('show') }
+async function enterApp(){ $('auth').style.display='none';$('app').style.display='block';showVerify();try{const d=await api('/api/me');setCredits(d.user.credits);$('verifyModal').classList.remove('show')}catch(e){$('verifyModal').classList.remove('show');$('app').style.display='none';$('auth').style.display='block';toast('Please log in to continue.')}}
+function setCredits(n){currentCredits=Number(n)||0;['homeCredits','watchCredits','redeemCredits'].forEach(id=>$(id).textContent=currentCredits.toLocaleString('en-IN'))}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');if(id==='history')loadHistory();if(id==='redeem')renderAmounts()}
+async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}$('app').style.display='none';$('auth').style.display='block';}
+async function watchAd(){try{const d=await api('/api/ads/start',{method:'POST',body:'{}'});adSessionId=d.adSessionId;adUrl=d.adUrl;window.open(adUrl,'_blank','noopener');$('watchButton').disabled=true;$('watchButton').textContent='PLEASE WAIT 8 SECONDS…';let remaining=8;const tick=()=>{remaining--;if(remaining>0){$('watchButton').textContent='WAIT '+remaining+' SECONDS…';setTimeout(tick,1000)}else{claimAd()}};setTimeout(tick,1000)}catch(e){toast(e.message)}}
+async function claimAd(){try{const d=await api('/api/ads/claim',{method:'POST',body:JSON.stringify({adSessionId})});setCredits(d.credits);message('🎉','20 credits added!','Your ad reward has been added to your balance.')}catch(e){message('⏱','Ad not completed',e.message)}finally{$('watchButton').disabled=false;$('watchButton').textContent='WATCH 8 SECOND AD · GET 20';adSessionId=null}}
+function message(icon,title,body){$('messageIcon').textContent=icon;$('messageTitle').textContent=title;$('messageText').textContent=body;$('messageModal').classList.add('show')}
+function closeMessage(){$('messageModal').classList.remove('show')}
+function renderAmounts(){const a=[1000,5000,10000,20000,50000,100000];$('amounts').innerHTML=a.map(n=>`<button class="amount ${n===selectedAmount?'selected':''}" onclick="selectedAmount=${n};renderAmounts()">${n.toLocaleString('en-IN')}</button>`).join('')}
+async function sendRequest(){try{const d=await api('/api/requests',{method:'POST',body:JSON.stringify({amount:selectedAmount,reelUrl:$('reelUrl').value.trim()})});setCredits(d.credits);$('reelUrl').value='';message('✓','Request submitted','Your request is pending review. You can track it in Request History.');showPage('history')}catch(e){toast(e.message)}}
+async function loadHistory(){try{const d=await api('/api/requests');$('historyList').innerHTML=d.requests.length?d.requests.map(r=>`<div class="history-item"><div style="display:flex;justify-content:space-between;gap:10px"><b>${Number(r.amount).toLocaleString('en-IN')} credits</b><span class="status ${r.status}">${r.status}</span></div><p class="muted" style="overflow-wrap:anywhere">${escapeHtml(r.reel_url)}</p><small class="muted">${new Date(r.created_at).toLocaleString()}</small>${r.admin_note?`<p class="muted">Admin note: ${escapeHtml(r.admin_note)}</p>`:''}</div>`).join(''):'<p class="muted">No requests yet.</p>'}catch(e){toast(e.message)}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+(async()=>{try{const c=await api('/api/config');adUrl=c.adUrl;await enterApp()}catch{$('auth').style.display='block';setAuth('login')}})();
+</script></body></html>
