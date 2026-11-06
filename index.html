@@ -66,7 +66,8 @@ h1{font-size:28px;letter-spacing:-1px;margin:8px 0}.sub{color:var(--muted);font-
 <script>
 let authMode='login', selectedAmount=1000, adSessionId=null, currentCredits=0, adUrl='';
 const $=id=>document.getElementById(id);
-async function api(url,opts={}){const r=await fetch(url,{...opts,credentials:'same-origin',headers:{'Content-Type':'application/json',...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Server error'}));if(!r.ok)throw Error(d.error||'Request failed');return d}
+const API_BASE='https://zon-of-insta-1.onrender.com';
+async function api(url,opts={}){const r=await fetch(`${API_BASE}${url}`,{...opts,credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Server error'}));if(!r.ok)throw Error(d.error||'Request failed');return d}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800)}
 function setAuth(mode){authMode=mode;$('loginTab').classList.toggle('on',mode==='login');$('signupTab').classList.toggle('on',mode==='signup');$('nameField').style.display=mode==='signup'?'block':'none';$('authSubmit').textContent=mode==='login'?'LOGIN & CONTINUE':'CREATE ACCOUNT';$('password').autocomplete=mode==='login'?'current-password':'new-password'}
 async function submitAuth(){try{const body={email:$('email').value.trim(),password:$('password').value};if(authMode==='signup')body.name=$('name').value.trim();await api('/api/'+(authMode==='login'?'login':'signup'),{method:'POST',body:JSON.stringify(body)});await enterApp()}catch(e){toast(e.message)}}
