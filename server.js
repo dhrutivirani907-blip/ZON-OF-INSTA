@@ -211,8 +211,13 @@ app.put("/api/admin/requests/:id", requireAdmin, async (req, res) => {
   finally { c.release(); }
 });
 
-app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
-app.get("/{*splat}", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/admin", (req, res) => {
+    res.sendFile(path.join(__dirname, "admin.html"));
+});
+
+app.get("/{*splat}", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
 
 init().then(() => app.listen(PORT, () => console.log(`ZON OF INSTA running on ${PORT}`)))
   .catch(e => { console.error("Database initialization failed:", e); process.exit(1); });
