@@ -1,236 +1,394 @@
-const express = require("express");
-const { Pool } = require("pg");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
-const path = require("path");
+'use strict';
+
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+const crypto = require('crypto');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
-const SESSION_SECRET = process.env.SESSION_SECRET;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const AD_DIRECT_URL = process.env.AD_DIRECT_URL || "https://example.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
-if (!DATABASE_URL || !SESSION_SECRET || !ADMIN_PASSWORD) {
-  console.error("Missing DATABASE_URL, SESSION_SECRET or ADMIN_PASSWORD environment variable.");
-  process.exit(1);
+if (!DATABASE_URL) {
+  console.error('DATABASE_URL is missing. Configure it in Render Environment.');
+}
+if (!ADMIN_PASSWORD) {
+  console.warn('ADMIN_PASSWORD is missing. Admin login is disabled.');
 }
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false }
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : undefined
 });
 
-app.set("trust proxy", 1);
-const FRONTEND_ORIGIN = "https://dhrutivirani907-blip.github.io";
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin === FRONTEND_ORIGIN) {
-    res.setHeader("Access-Control-Allow-Origin", FRONTEND_ORIGIN);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  }
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
-app.use(express.json({ limit: "30kb" }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());
+app.use(express.json({ limit: '30kb' }));
+app.use(express.static(path.join(__dirname)));
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
-const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: true, legacyHeaders: false });
+const adminTokens = new Map();
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+const MIN_WITHDRAW = 2500000;
+const AD_REWARD = 250000;
+const MIN_AD_SECONDS = 8;
 
-function tokenFor(payload) {
-  return jwt.sign(payload, SESSION_SECRET, { expiresIn: "30d" });
-}
-function setSession(res, payload) {
-  res.cookie("zoi_session", tokenFor(payload), {
-    httpOnly: true, secure: process.env.NODE_ENV === "production",
-    sameSite: "none", maxAge: 30 * 24 * 60 * 60 * 1000
-  });
-}
-function requireUser(req, res, next) {
-  try {
-    const t = req.cookies.zoi_session;
-    if (!t) return res.status(401).json({ error: "Please log in." });
-    const data = jwt.verify(t, SESSION_SECRET);
-    if (data.role !== "user") return res.status(403).json({ error: "User access required." });
-    req.user = data;
-    next();
-  } catch { return res.status(401).json({ error: "Session expired. Please log in again." }); }
-}
-function requireAdmin(req, res, next) {
-  try {
-    const t = req.cookies.zoi_session;
-    if (!t) return res.status(401).json({ error: "Admin login required." });
-    const data = jwt.verify(t, SESSION_SECRET);
-    if (data.role !== "admin") return res.status(403).json({ error: "Admin access required." });
-    next();
-  } catch { return res.status(401).json({ error: "Admin login required." }); }
-}
-const emailOk = v => typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254;
-const reelOk = v => {
-  try {
-    const u = new URL(v);
-    return ["instagram.com", "www.instagram.com"].includes(u.hostname) && u.pathname.includes("/reel/");
-  } catch { return false; }
-};
+const q = (sql, params = []) => pool.query(sql, params);
 
-async function init() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL, credits BIGINT NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS ad_sessions (
-      id UUID PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), claimed_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS requests (
-      id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      amount BIGINT NOT NULL CHECK (amount IN (1000,5000,10000,20000,50000,100000)),
-      reel_url TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending','completed','rejected')),
-      admin_note TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+// -------------------- Database --------------------
+async function initDb() {
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_users (
+      user_id TEXT PRIMARY KEY,
+      balance BIGINT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
+    )
   `);
-  console.log("ZON OF INSTA database ready");
+
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_ad_sessions (
+      session_id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      claimed_at TIMESTAMPTZ,
+      claimed BOOLEAN NOT NULL DEFAULT FALSE
+    )
+  `);
+
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_withdrawals (
+      id BIGSERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      binance_id TEXT NOT NULL,
+      amount BIGINT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'complete', 'reject')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 }
 
-app.get("/api/config", (req, res) => res.json({ adUrl: AD_DIRECT_URL }));
-app.post("/api/signup", authLimiter, async (req, res) => {
+// -------------------- Helpers --------------------
+function validUserId(value) {
+  return typeof value === 'string' &&
+    value.length >= 4 && value.length <= 100 &&
+    /^[a-zA-Z0-9_-]+$/.test(value);
+}
+
+function adminOnly(req, res, next) {
+  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const createdAt = adminTokens.get(token);
+
+  if (!token || !createdAt || Date.now() - createdAt > TOKEN_TTL_MS) {
+    if (token) adminTokens.delete(token);
+    return res.status(401).json({ error: 'Admin login required. Please login again.' });
+  }
+
+  next();
+}
+
+// -------------------- Health check --------------------
+app.get('/api/health', async (req, res) => {
   try {
-    const { name, email, password } = req.body || {};
-    if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 60 ||
-        !emailOk(email) || typeof password !== "string" || password.length < 8 || password.length > 72) {
-      return res.status(400).json({ error: "Enter a valid name, email and password (8–72 characters)." });
-    }
-    const hash = await bcrypt.hash(password, 12);
-    const r = await pool.query(
-      "INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3) RETURNING id,name,email,credits",
-      [name.trim(), email.toLowerCase().trim(), hash]
-    );
-    setSession(res, { id: r.rows[0].id, role: "user" });
-    res.json({ user: r.rows[0] });
-  } catch (e) {
-    if (e.code === "23505") return res.status(409).json({ error: "An account with this email already exists. Please log in." });
-    console.error(e); res.status(500).json({ error: "Signup failed." });
+    await q('SELECT 1');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false });
   }
 });
-app.post("/api/login", authLimiter, async (req, res) => {
+
+// -------------------- Balance --------------------
+app.get('/api/user/:userId', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
-    if (!emailOk(email) || typeof password !== "string") return res.status(400).json({ error: "Enter email and password." });
-    const r = await pool.query("SELECT id,name,email,password_hash,credits FROM users WHERE email=$1", [email.toLowerCase().trim()]);
-    if (!r.rowCount || !(await bcrypt.compare(password, r.rows[0].password_hash))) return res.status(401).json({ error: "Incorrect email or password." });
-    const u = r.rows[0]; setSession(res, { id: u.id, role: "user" });
-    delete u.password_hash; res.json({ user: u });
-  } catch (e) { console.error(e); res.status(500).json({ error: "Login failed." }); }
-});
-app.post("/api/logout", (req, res) => { res.clearCookie("zoi_session", { httpOnly: true, secure: true, sameSite: "none" }); res.json({ ok: true }); });
-app.get("/api/me", requireUser, async (req, res) => {
-  const r = await pool.query("SELECT id,name,email,credits FROM users WHERE id=$1", [req.user.id]);
-  if (!r.rowCount) return res.status(401).json({ error: "Account not found." });
-  res.json({ user: r.rows[0] });
+    const userId = req.params.userId;
+    if (!validUserId(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const result = await q(`
+      INSERT INTO bd_users (user_id)
+      VALUES ($1)
+      ON CONFLICT (user_id) DO UPDATE SET updated_at = NOW()
+      RETURNING balance
+    `, [userId]);
+
+    res.json({ balance: Number(result.rows[0].balance) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load account' });
+  }
 });
 
-/* The ad timer is validated by the server; clients cannot claim before 8 seconds. */
-app.post("/api/ads/start", requireUser, async (req, res) => {
-  const { randomUUID } = require("crypto");
-  const id = randomUUID();
-  await pool.query("INSERT INTO ad_sessions(id,user_id) VALUES($1,$2)", [id, req.user.id]);
-  res.json({ adSessionId: id, adUrl: AD_DIRECT_URL });
-});
-app.post("/api/ads/claim", requireUser, async (req, res) => {
-  const id = req.body && req.body.adSessionId;
-  if (typeof id !== "string") return res.status(400).json({ error: "Invalid ad session." });
-  const c = await pool.connect();
+// -------------------- Start ad timer --------------------
+app.post('/api/ad/start', async (req, res) => {
   try {
-    await c.query("BEGIN");
-    const r = await c.query(
-      "SELECT id FROM ad_sessions WHERE id=$1 AND user_id=$2 AND claimed_at IS NULL AND started_at <= NOW() - INTERVAL '8 seconds' FOR UPDATE",
-      [id, req.user.id]
+    const { userId } = req.body;
+    if (!validUserId(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+
+    const sessionId = crypto.randomUUID();
+    await q(
+      'INSERT INTO bd_ad_sessions (session_id, user_id) VALUES ($1, $2)',
+      [sessionId, userId]
     );
-    if (!r.rowCount) { await c.query("ROLLBACK"); return res.status(400).json({ error: "Please complete at least 8 seconds first, or this ad was already claimed." }); }
-    await c.query("UPDATE ad_sessions SET claimed_at=NOW() WHERE id=$1", [id]);
-    const u = await c.query("UPDATE users SET credits=credits+20 WHERE id=$1 RETURNING credits", [req.user.id]);
-    await c.query("COMMIT");
-    res.json({ added: 20, credits: u.rows[0].credits });
-  } catch (e) { await c.query("ROLLBACK"); console.error(e); res.status(500).json({ error: "Could not claim reward." }); }
-  finally { c.release(); }
+
+    res.json({ sessionId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not start ad session' });
+  }
 });
 
-app.post("/api/requests", requireUser, async (req, res) => {
-  const amount = Number(req.body && req.body.amount);
-  const reelUrl = req.body && req.body.reelUrl;
-  const allowed = [1000,5000,10000,20000,50000,100000];
-  if (!allowed.includes(amount) || !reelOk(reelUrl)) return res.status(400).json({ error: "Choose a valid amount and enter an Instagram Reel URL." });
-  const c = await pool.connect();
+// -------------------- Claim ad reward --------------------
+app.post('/api/ad/claim', async (req, res) => {
+  const { userId, sessionId } = req.body;
+
+  if (!validUserId(userId) || typeof sessionId !== 'string') {
+    return res.status(400).json({ error: 'Invalid ad session' });
+  }
+
+  const client = await pool.connect();
   try {
-    await c.query("BEGIN");
-    const u = await c.query("UPDATE users SET credits=credits-$1 WHERE id=$2 AND credits >= $1 RETURNING credits", [amount, req.user.id]);
-    if (!u.rowCount) { await c.query("ROLLBACK"); return res.status(400).json({ error: "Not enough credits." }); }
-    const r = await c.query(
-      "INSERT INTO requests(user_id,amount,reel_url) VALUES($1,$2,$3) RETURNING id,status,amount,reel_url,created_at",
-      [req.user.id, amount, reelUrl]
+    await client.query('BEGIN');
+
+    const sessionResult = await client.query(`
+      SELECT * FROM bd_ad_sessions
+      WHERE session_id = $1 AND user_id = $2
+      FOR UPDATE
+    `, [sessionId, userId]);
+
+    if (!sessionResult.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Ad session not found' });
+    }
+
+    const session = sessionResult.rows[0];
+    if (session.claimed) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'This ad session has already been claimed' });
+    }
+
+    const elapsedSeconds = (Date.now() - new Date(session.started_at).getTime()) / 1000;
+    if (elapsedSeconds < MIN_AD_SECONDS) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Please watch for at least 8 seconds' });
+    }
+
+    await client.query(`
+      UPDATE bd_ad_sessions
+      SET claimed = TRUE, claimed_at = NOW()
+      WHERE session_id = $1
+    `, [sessionId]);
+
+    const balanceResult = await client.query(`
+      UPDATE bd_users
+      SET balance = balance + $2, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING balance
+    `, [userId, AD_REWARD]);
+
+    await client.query('COMMIT');
+    res.json({ reward: AD_REWARD, balance: Number(balanceResult.rows[0].balance) });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Could not claim reward' });
+  } finally {
+    client.release();
+  }
+});
+
+// -------------------- Submit withdrawal --------------------
+app.post('/api/withdraw', async (req, res) => {
+  const { userId, binanceId, amount } = req.body;
+  const id = String(binanceId || '').trim();
+  const n = Number(amount);
+
+  if (!validUserId(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  if (!id || id.length > 100) {
+    return res.status(400).json({ error: 'Please enter a valid Binance ID' });
+  }
+  if (!Number.isSafeInteger(n) || n < MIN_WITHDRAW) {
+    return res.status(400).json({ error: 'Minimum withdrawal is 2,500,000 BabyDoge' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const userResult = await client.query(
+      'SELECT balance FROM bd_users WHERE user_id = $1 FOR UPDATE',
+      [userId]
     );
-    await c.query("COMMIT");
-    res.json({ request: r.rows[0], credits: u.rows[0].credits });
-  } catch (e) { await c.query("ROLLBACK"); console.error(e); res.status(500).json({ error: "Could not submit request." }); }
-  finally { c.release(); }
-});
-app.get("/api/requests", requireUser, async (req, res) => {
-  const r = await pool.query("SELECT id,amount,reel_url,status,admin_note,created_at,updated_at FROM requests WHERE user_id=$1 ORDER BY created_at DESC", [req.user.id]);
-  res.json({ requests: r.rows });
+
+    if (!userResult.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Account not found' });
+    }
+    if (Number(userResult.rows[0].balance) < n) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Insufficient BabyDoge balance' });
+    }
+
+    const balanceResult = await client.query(`
+      UPDATE bd_users
+      SET balance = balance - $2, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING balance
+    `, [userId, n]);
+
+    const withdrawalResult = await client.query(`
+      INSERT INTO bd_withdrawals (user_id, binance_id, amount)
+      VALUES ($1, $2, $3)
+      RETURNING id, status, created_at
+    `, [userId, id, n]);
+
+    await client.query('COMMIT');
+    res.json({
+      balance: Number(balanceResult.rows[0].balance),
+      request: withdrawalResult.rows[0]
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Withdrawal request failed' });
+  } finally {
+    client.release();
+  }
 });
 
-app.post("/api/admin/login", authLimiter, (req, res) => {
-  if (!req.body || req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Incorrect admin password." });
-  setSession(res, { role: "admin" }); res.json({ ok: true });
-});
-app.get("/api/admin/summary", requireAdmin, async (req, res) => {
-  const [u, r, p] = await Promise.all([
-    pool.query("SELECT COUNT(*)::int AS count FROM users"),
-    pool.query("SELECT COUNT(*)::int AS count FROM requests"),
-    pool.query("SELECT COUNT(*)::int AS count FROM requests WHERE status='pending'")
-  ]);
-  res.json({ users: u.rows[0].count, requests: r.rows[0].count, pending: p.rows[0].count });
-});
-app.get("/api/admin/requests", requireAdmin, async (req, res) => {
-  const r = await pool.query(`SELECT r.id,r.user_id,u.name,u.email,r.amount,r.reel_url,r.status,r.admin_note,r.created_at
-    FROM requests r JOIN users u ON u.id=r.user_id ORDER BY r.created_at DESC LIMIT 500`);
-  res.json({ requests: r.rows });
-});
-app.put("/api/admin/requests/:id", requireAdmin, async (req, res) => {
-  const id = Number(req.params.id), status = req.body && req.body.status;
-  const note = typeof (req.body && req.body.note) === "string" ? req.body.note.slice(0,500) : "";
-  if (!Number.isSafeInteger(id) || id < 1 || !["completed","rejected"].includes(status)) return res.status(400).json({ error: "Invalid update." });
-  const c = await pool.connect();
+// -------------------- User withdrawal history --------------------
+app.get('/api/withdrawals/:userId', async (req, res) => {
   try {
-    await c.query("BEGIN");
-    const r = await c.query("SELECT id,user_id,amount,status FROM requests WHERE id=$1 FOR UPDATE", [id]);
-    if (!r.rowCount) { await c.query("ROLLBACK"); return res.status(404).json({ error: "Request not found." }); }
-    if (r.rows[0].status !== "pending") { await c.query("ROLLBACK"); return res.status(409).json({ error: "This request has already been processed." }); }
-    if (status === "rejected") await c.query("UPDATE users SET credits=credits+$1 WHERE id=$2", [r.rows[0].amount, r.rows[0].user_id]);
-    await c.query("UPDATE requests SET status=$1,admin_note=$2,updated_at=NOW() WHERE id=$3", [status,note,id]);
-    await c.query("COMMIT"); res.json({ ok: true, refunded: status === "rejected" ? r.rows[0].amount : 0 });
-  } catch (e) { await c.query("ROLLBACK"); console.error(e); res.status(500).json({ error: "Could not update request." }); }
-  finally { c.release(); }
+    const userId = req.params.userId;
+    if (!validUserId(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const result = await q(`
+      SELECT id, binance_id, amount, status, created_at
+      FROM bd_withdrawals
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+
+    res.json({ requests: result.rows.map(row => ({ ...row, amount: Number(row.amount) })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load withdrawals' });
+  }
 });
 
-app.get("/admin", (req, res) => {
-    res.sendFile(path.join(__dirname, "admin.html"));
+// -------------------- Admin login --------------------
+app.post('/api/admin/login', (req, res) => {
+  if (!ADMIN_PASSWORD) {
+    return res.status(503).json({ error: 'Admin password is not configured on server' });
+  }
+
+  const password = req.body.password;
+  const correct = typeof password === 'string' &&
+    password.length === ADMIN_PASSWORD.length &&
+    crypto.timingSafeEqual(Buffer.from(password), Buffer.from(ADMIN_PASSWORD));
+
+  if (!correct) {
+    return res.status(401).json({ error: 'Incorrect password' });
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  adminTokens.set(token, Date.now());
+  res.json({ token });
 });
 
-app.get("/{*splat}", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
+// -------------------- Admin withdrawal list --------------------
+app.get('/api/admin/withdrawals', adminOnly, async (req, res) => {
+  try {
+    const result = await q(`
+      SELECT id, user_id, binance_id, amount, status, created_at
+      FROM bd_withdrawals
+      ORDER BY created_at DESC
+    `);
+
+    res.json({ requests: result.rows.map(row => ({ ...row, amount: Number(row.amount) })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load admin requests' });
+  }
 });
 
-init().then(() => app.listen(PORT, () => console.log(`ZON OF INSTA running on ${PORT}`)))
-  .catch(e => { console.error("Database initialization failed:", e); process.exit(1); });
+// -------------------- Admin status change --------------------
+app.patch('/api/admin/withdrawals/:id', adminOnly, async (req, res) => {
+  const status = req.body.status;
+  if (!['pending', 'complete', 'reject'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const requestResult = await client.query(
+      'SELECT * FROM bd_withdrawals WHERE id = $1 FOR UPDATE',
+      [req.params.id]
+    );
+
+    if (!requestResult.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    const old = requestResult.rows[0];
+    if (old.status !== 'pending' && old.status !== status) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Finalized requests cannot be changed again' });
+    }
+
+    // Refund the user's reserved coins exactly once when rejecting a pending request.
+    if (old.status === 'pending' && status === 'reject') {
+      await client.query(`
+        UPDATE bd_users
+        SET balance = balance + $2, updated_at = NOW()
+        WHERE user_id = $1
+      `, [old.user_id, old.amount]);
+    }
+
+    const updateResult = await client.query(`
+      UPDATE bd_withdrawals
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING id, status
+    `, [status, req.params.id]);
+
+    await client.query('COMMIT');
+    res.json({ request: updateResult.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Status update failed' });
+  } finally {
+    client.release();
+  }
+});
+
+// -------------------- App page --------------------
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+initDb()
+  .then(() => {
+    app.listen(PORT, () => console.log(`BabyDoge Rewards server running on port ${PORT}`));
+  })
+  .catch(err => {
+    console.error('Database initialization failed:', err);
+    process.exit(1);
+  });
