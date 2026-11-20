@@ -149,7 +149,7 @@ app.post('/api/ad/start', async (req, res) => {
 
 // -------------------- Claim ad reward --------------------
 app.post('/api/ad/claim', async (req, res) => {
-  const { userId, sessionId } = req.body;
+  const { userId, sessionId, hiddenSeconds } = req.body;
 
   if (!validUserId(userId) || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'Invalid ad session' });
@@ -177,7 +177,8 @@ app.post('/api/ad/claim', async (req, res) => {
     }
 
     const elapsedSeconds = (Date.now() - new Date(session.started_at).getTime()) / 1000;
-    if (elapsedSeconds < MIN_AD_SECONDS) {
+    const awaySeconds = Number(hiddenSeconds);
+    if (!Number.isFinite(awaySeconds) || awaySeconds < MIN_AD_SECONDS || elapsedSeconds < MIN_AD_SECONDS) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Please watch for at least 8 seconds' });
     }
