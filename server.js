@@ -978,6 +978,42 @@ app.post('/api/admin/ban-binance', adminOnly, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Could not ban account' }); }
 });
 
+// Admin Panel 3: unban account by Binance ID
+app.post('/api/admin/unban-binance', adminOnly, async (req, res) => {
+  try {
+    const binanceId = String(req.body.binanceId || '').trim();
+    if (!binanceId || binanceId.length > 100) return res.status(400).json({ error: 'Enter a valid Binance ID' });
+    const found = await q('SELECT user_id FROM bd_users WHERE LOWER(binance_id) = LOWER($1)', [binanceId]);
+    if (!found.rowCount) return res.status(404).json({ error: 'No account found for this Binance ID' });
+    const targetUserId = found.rows[0].user_id;
+    const result = await q('DELETE FROM bd_user_bans WHERE user_id = $1 RETURNING user_id', [targetUserId]);
+    if (!result.rowCount) return res.status(404).json({ error: 'This account is not banned' });
+    res.json({ success: true, userId: targetUserId, binanceId });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not unban account' }); }
+});
+
+// Admin Panel 4: reset balance, withdrawals, and referral records by Binance ID
+app.post('/api/admin/reset-binance', adminOnly, async (req, res) => {
+  const binanceId = String(req.body.binanceId || '').trim();
+  if (!binanceId || binanceId.length > 100) return res.status(400).json({ error: 'Enter a valid Binance ID' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT user_id, binance_id FROM bd_users WHERE LOWER(binance_id) = LOWER($1) FOR UPDATE', [binanceId]);
+    if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'No account found for this Binance ID' }); }
+    const targetUserId = found.rows[0].user_id;
+    await client.query('UPDATE bd_users SET balance = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
+    const withdrawals = await client.query('DELETE FROM bd_withdrawals WHERE user_id = $1 RETURNING id', [targetUserId]);
+    const referrals = await client.query('DELETE FROM bd_referrals WHERE referrer_id = $1 OR referred_id = $1 RETURNING id', [targetUserId]);
+    await client.query('COMMIT');
+    res.json({ success: true, userId: targetUserId, binanceId: found.rows[0].binance_id, deletedWithdrawals: withdrawals.rowCount, deletedReferrals: referrals.rowCount });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Could not reset account data' });
+  } finally { client.release(); }
+});
+
 // -------------------- Admin withdrawal list --------------------
 app.get('/api/admin/withdrawals', adminOnly, async (req, res) => {
   try {
