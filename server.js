@@ -43,8 +43,19 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS bd_users (
       user_id TEXT PRIMARY KEY,
       balance BIGINT NOT NULL DEFAULT 0,
+      binance_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS binance_id TEXT');
+
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_user_bans (
+      user_id TEXT PRIMARY KEY REFERENCES bd_users(user_id),
+      reason TEXT NOT NULL,
+      banned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 
@@ -151,6 +162,19 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// Block banned accounts from user actions, while allowing status check, Binance save, and admin routes.
+app.use('/api', async (req, res, next) => {
+  try {
+    if (req.path === '/admin/login' || req.path.startsWith('/admin/') || req.path === '/binance/save' || (req.method === 'GET' && /^\/user\/[^/]+$/.test(req.path))) return next();
+    const pathUserMatch = req.path.match(/^\/(?:withdrawals|referrals)\/([^/]+)$/);
+    const userId = req.body?.userId || pathUserMatch?.[1] || req.params.userId;
+    if (!userId || !validUserId(userId)) return next();
+    const ban = await q('SELECT reason FROM bd_user_bans WHERE user_id = $1', [userId]);
+    if (ban.rowCount) return res.status(403).json({ error: 'Your account is banned: ' + ban.rows[0].reason, banned: true, reason: ban.rows[0].reason });
+    next();
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Account status check failed' }); }
+});
+
 // -------------------- Health check --------------------
 app.get('/api/health', async (req, res) => {
   try {
@@ -181,8 +205,13 @@ app.get('/api/user/:userId', async (req, res) => {
       RETURNING balance
     `, [userId]);
 
+    const userData = await q('SELECT binance_id FROM bd_users WHERE user_id = $1', [userId]);
+    const banData = await q('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
     res.json({
-      balance: Number(result.rows[0].balance)
+      balance: Number(result.rows[0].balance),
+      binanceId: userData.rows[0]?.binance_id || null,
+      banned: !!banData.rowCount,
+      banReason: banData.rows[0]?.reason || null
     });
   } catch (err) {
     console.error(err);
@@ -191,6 +220,19 @@ app.get('/api/user/:userId', async (req, res) => {
       error: 'Could not load account'
     });
   }
+});
+
+// Save user's Binance ID (first-time setup)
+app.post('/api/binance/save', async (req, res) => {
+  try {
+    const { userId, binanceId } = req.body;
+    if (!validUserId(userId) || typeof binanceId !== 'string' || !binanceId.trim() || binanceId.trim().length > 100) return res.status(400).json({ error: 'Please enter a valid Binance ID' });
+    await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+    const current = await q('SELECT binance_id FROM bd_users WHERE user_id = $1', [userId]);
+    if (current.rows[0].binance_id) return res.status(409).json({ error: 'Binance ID is already saved and cannot be changed here.' });
+    await q('UPDATE bd_users SET binance_id = $2, updated_at = NOW() WHERE user_id = $1', [userId, binanceId.trim()]);
+    res.json({ success: true, binanceId: binanceId.trim() });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not save Binance ID' }); }
 });
 
 // -------------------- Start ad timer --------------------
@@ -918,6 +960,22 @@ app.post('/api/admin/login', (req, res) => {
   res.json({
     token
   });
+});
+
+// Admin Panel 3: ban account by Binance ID
+app.post('/api/admin/ban-binance', adminOnly, async (req, res) => {
+  try {
+    const binanceId = String(req.body.binanceId || '').trim();
+    const reason = String(req.body.reason || '').trim();
+    if (!binanceId || binanceId.length > 100) return res.status(400).json({ error: 'Enter a valid Binance ID' });
+    if (!reason || reason.length > 1000) return res.status(400).json({ error: 'Enter a ban reason (up to 1000 characters)' });
+    const found = await q('SELECT user_id FROM bd_users WHERE LOWER(binance_id) = LOWER($1)', [binanceId]);
+    if (!found.rowCount) return res.status(404).json({ error: 'No account found for this Binance ID' });
+    const targetUserId = found.rows[0].user_id;
+    await q(`INSERT INTO bd_user_bans(user_id, reason) VALUES ($1, $2)
+      ON CONFLICT(user_id) DO UPDATE SET reason = EXCLUDED.reason, banned_at = NOW()`, [targetUserId, reason]);
+    res.json({ success: true, userId: targetUserId, binanceId, reason });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not ban account' }); }
 });
 
 // -------------------- Admin withdrawal list --------------------
