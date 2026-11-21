@@ -103,6 +103,17 @@ async function initDb() {
     )
   `);
 
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_referrals (
+      id BIGSERIAL PRIMARY KEY,
+      referrer_id TEXT NOT NULL REFERENCES bd_users(user_id),
+      referred_id TEXT NOT NULL UNIQUE REFERENCES bd_users(user_id),
+      reward BIGINT NOT NULL DEFAULT 10000000,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (referrer_id <> referred_id)
+    )
+  `);
+
   const defaultTask = await q(
     'SELECT id FROM bd_tasks WHERE active = TRUE ORDER BY id ASC LIMIT 1'
   );
@@ -449,6 +460,57 @@ app.get('/api/withdrawals/:userId', async (req, res) => {
   }
 });
 
+// -------------------- Referral system --------------------
+const REFERRAL_REWARD = 10000000;
+
+app.get('/api/referrals/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  if (!validUserId(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+  try {
+    const result = await q('SELECT COUNT(*)::int AS count FROM bd_referrals WHERE referrer_id = $1', [userId]);
+    res.json({ count: result.rows[0].count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load referral stats' });
+  }
+});
+
+app.post('/api/referrals/claim', async (req, res) => {
+  const { userId, referrerId } = req.body || {};
+  if (!validUserId(userId) || !validUserId(referrerId)) {
+    return res.status(400).json({ error: 'Invalid referral information' });
+  }
+  if (userId === referrerId) return res.status(400).json({ error: 'Self-referral is not allowed' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('INSERT INTO bd_users(user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+    await client.query('INSERT INTO bd_users(user_id) VALUES ($1) ON CONFLICT DO NOTHING', [referrerId]);
+    const inserted = await client.query(`
+      INSERT INTO bd_referrals(referrer_id, referred_id, reward)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (referred_id) DO NOTHING
+      RETURNING id
+    `, [referrerId, userId, REFERRAL_REWARD]);
+    if (!inserted.rowCount) {
+      await client.query('COMMIT');
+      return res.json({ reward: 0, alreadyProcessed: true });
+    }
+    const refBalance = await client.query(`
+      UPDATE bd_users SET balance = balance + $2, updated_at = NOW()
+      WHERE user_id = $1 RETURNING balance
+    `, [referrerId, REFERRAL_REWARD]);
+    await client.query('COMMIT');
+    res.json({ reward: REFERRAL_REWARD, balance: Number(refBalance.rows[0].balance) });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Referral reward could not be processed' });
+  } finally {
+    client.release();
+  }
+});
+
 // -------------------- Tasks --------------------
 app.get('/api/tasks', async (req, res) => {
   try {
@@ -733,9 +795,13 @@ app.post('/api/admin/tasks', adminOnly, async (req, res) => {
     const link = String(req.body.link || '').trim();
     const amount = Number(req.body.amount);
 
-    const name =
-      String(req.body.name || 'TIN APP').trim() ||
-      'TIN APP';
+    const name = String(req.body.name || '').trim();
+
+    if (!name || name.length > 100) {
+      return res.status(400).json({
+        error: 'Please enter a task name (maximum 100 characters)'
+      });
+    }
 
     if (
       !/^https?:\/\//i.test(link) ||
