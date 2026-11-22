@@ -206,7 +206,7 @@ app.get('/api/health', async (req, res) => {
 async function settleMiners(client, userId) {
   const now = Date.now();
   const rows = await client.query(`
-    SELECT id, started_at, expires_at, rate
+    SELECT id, started_at, expires_at, rate, credited_seconds
     FROM bd_miners
     WHERE user_id = $1 AND active = TRUE
     FOR UPDATE
@@ -243,7 +243,37 @@ async function settleMiners(client, userId) {
   return earned;
 }
 
+async function activatePendingMiners(client, userId) {
+  const userResult = await client.query(
+    'SELECT valid_ads_count FROM bd_users WHERE user_id = $1 FOR UPDATE',
+    [userId]
+  );
+
+  if (!userResult.rowCount) return 0;
+
+  const validAds = Number(userResult.rows[0].valid_ads_count || 0);
+  const minersToActivate = Math.floor(validAds / ADS_PER_MINER);
+  if (minersToActivate <= 0) return 0;
+
+  for (let i = 0; i < minersToActivate; i++) {
+    await client.query(
+      `INSERT INTO bd_miners (user_id, started_at, expires_at, rate, active, credited_seconds)
+       VALUES ($1, NOW(), NOW() + ($2 * INTERVAL '1 second'), $3, TRUE, 0)`,
+      [userId, MINER_DURATION_SECONDS, MINER_RATE]
+    );
+  }
+
+  const remainder = validAds % ADS_PER_MINER;
+  await client.query(
+    'UPDATE bd_users SET valid_ads_count = $2, updated_at = NOW() WHERE user_id = $1',
+    [userId, remainder]
+  );
+
+  return minersToActivate;
+}
+
 async function getMinerState(client, userId) {
+  await activatePendingMiners(client, userId);
   await settleMiners(client, userId);
   const active = await client.query(`
     SELECT id, expires_at, rate
@@ -456,12 +486,28 @@ app.post('/api/ad/claim', async (req, res) => {
       RETURNING balance, valid_ads_count
     `, [userId, AD_REWARD]);
 
+    // Activate every complete group of 10 ads immediately.
+    const newCount = Number(balanceResult.rows[0].valid_ads_count || 0);
+    let minerActivated = false;
+    if (newCount >= ADS_PER_MINER) {
+      await activatePendingMiners(client, userId);
+      minerActivated = true;
+    }
+
+    const finalUser = await client.query(
+      'SELECT balance, valid_ads_count FROM bd_users WHERE user_id = $1',
+      [userId]
+    );
+    const miner = await getMinerState(client, userId);
+
     await client.query('COMMIT');
 
     res.json({
       reward: AD_REWARD,
-      balance: Number(balanceResult.rows[0].balance),
-      validAdsCount: Number(balanceResult.rows[0].valid_ads_count)
+      balance: Number(finalUser.rows[0].balance),
+      validAdsCount: Number(finalUser.rows[0].valid_ads_count),
+      minerActivated,
+      miner
     });
 
   } catch (err) {
