@@ -143,6 +143,15 @@ async function initDb() {
     )
   `);
 
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_live_payments (
+      id BIGSERIAL PRIMARY KEY,
+      payment_text TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await q('CREATE INDEX IF NOT EXISTS bd_live_payments_created_idx ON bd_live_payments(created_at DESC)');
+
   const defaultTask = await q(
     'SELECT id FROM bd_tasks WHERE active = TRUE ORDER BY id ASC LIMIT 1'
   );
@@ -1109,6 +1118,74 @@ app.delete('/api/admin/tasks/:id', adminOnly, async (req, res) => {
     res.status(500).json({
       error: 'Could not delete task'
     });
+  }
+});
+
+// -------------------- Live Payments --------------------
+app.get('/api/live-payments', async (req, res) => {
+  try {
+    const result = await q(`
+      SELECT id, payment_text, created_at
+      FROM bd_live_payments
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+    `);
+    res.json({
+      payments: result.rows.map(row => ({
+        id: Number(row.id),
+        text: row.payment_text,
+        createdAt: row.created_at
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load live payments' });
+  }
+});
+
+// Admin Panel 5: add a new live payment entry
+app.post('/api/admin/live-payments', adminOnly, async (req, res) => {
+  try {
+    const text = String(req.body.text || '').trim();
+    if (!text) return res.status(400).json({ error: 'Please enter payment text' });
+    if (text.length > 500) return res.status(400).json({ error: 'Payment text is too long' });
+
+    const result = await q(`
+      INSERT INTO bd_live_payments (payment_text)
+      VALUES ($1)
+      RETURNING id, payment_text, created_at
+    `, [text]);
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      payment: { id: Number(row.id), text: row.payment_text, createdAt: row.created_at }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not add live payment' });
+  }
+});
+
+// Admin Panel 5: list live payments
+app.get('/api/admin/live-payments', adminOnly, async (req, res) => {
+  try {
+    const result = await q(`
+      SELECT id, payment_text, created_at
+      FROM bd_live_payments
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+    `);
+    res.json({
+      payments: result.rows.map(row => ({
+        id: Number(row.id),
+        text: row.payment_text,
+        createdAt: row.created_at
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load admin live payments' });
   }
 });
 
