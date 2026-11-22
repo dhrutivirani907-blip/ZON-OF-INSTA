@@ -1018,6 +1018,50 @@ app.post('/api/admin/unban-binance', adminOnly, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Could not unban account' }); }
 });
 
+// Admin Panel 4: all accounts with account totals (admin-only)
+app.get('/api/admin/users', adminOnly, async (req, res) => {
+  try {
+    const result = await q(`
+      SELECT u.user_id, u.binance_id, u.balance, u.valid_ads_count, u.created_at,
+        COALESCE(r.referral_count, 0)::BIGINT AS referral_count,
+        COALESCE(w.completed_total, 0)::BIGINT AS completed_total,
+        COALESCE(w.request_count, 0)::BIGINT AS request_count,
+        COALESCE(w.requested_total, 0)::BIGINT AS requested_total
+      FROM bd_users u
+      LEFT JOIN (SELECT referrer_id, COUNT(*) AS referral_count FROM bd_referrals GROUP BY referrer_id) r ON r.referrer_id = u.user_id
+      LEFT JOIN (SELECT user_id, SUM(amount) FILTER (WHERE status = 'complete') AS completed_total,
+        COUNT(*) AS request_count, SUM(amount) AS requested_total FROM bd_withdrawals GROUP BY user_id) w ON w.user_id = u.user_id
+      ORDER BY u.created_at DESC, u.user_id DESC
+    `);
+    res.json({ users: result.rows.map(row => ({
+      userId: row.user_id, binanceId: row.binance_id,
+      balance: Number(row.balance || 0), validAdsCount: Number(row.valid_ads_count || 0),
+      createdAt: row.created_at, referrals: Number(row.referral_count || 0),
+      totalWithdrawn: Number(row.completed_total || 0),
+      withdrawalRequests: Number(row.request_count || 0), totalRequested: Number(row.requested_total || 0)
+    })) });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not load user accounts' }); }
+});
+
+// Admin Panel 4: reset one account by user ID
+app.post('/api/admin/users/:userId/reset', adminOnly, async (req, res) => {
+  const targetUserId = req.params.userId;
+  if (!validUserId(targetUserId)) return res.status(400).json({ error: 'Invalid user ID' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT user_id, binance_id FROM bd_users WHERE user_id = $1 FOR UPDATE', [targetUserId]);
+    if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Account not found' }); }
+    await client.query('UPDATE bd_users SET balance = 0, valid_ads_count = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
+    const withdrawals = await client.query('DELETE FROM bd_withdrawals WHERE user_id = $1 RETURNING id', [targetUserId]);
+    const referrals = await client.query('DELETE FROM bd_referrals WHERE referrer_id = $1 OR referred_id = $1 RETURNING id', [targetUserId]);
+    await client.query('COMMIT');
+    res.json({ success: true, userId: targetUserId, binanceId: found.rows[0].binance_id,
+      deletedWithdrawals: withdrawals.rowCount, deletedReferrals: referrals.rowCount });
+  } catch (err) { await client.query('ROLLBACK'); console.error(err); res.status(500).json({ error: 'Could not reset account' }); }
+  finally { client.release(); }
+});
+
 // Admin Panel 4: reset balance, withdrawals, and referral records by Binance ID
 app.post('/api/admin/reset-binance', adminOnly, async (req, res) => {
   const binanceId = String(req.body.binanceId || '').trim();
@@ -1028,7 +1072,7 @@ app.post('/api/admin/reset-binance', adminOnly, async (req, res) => {
     const found = await client.query('SELECT user_id, binance_id FROM bd_users WHERE LOWER(binance_id) = LOWER($1) FOR UPDATE', [binanceId]);
     if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'No account found for this Binance ID' }); }
     const targetUserId = found.rows[0].user_id;
-    await client.query('UPDATE bd_users SET balance = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
+    await client.query('UPDATE bd_users SET balance = 0, valid_ads_count = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
     const withdrawals = await client.query('DELETE FROM bd_withdrawals WHERE user_id = $1 RETURNING id', [targetUserId]);
     const referrals = await client.query('DELETE FROM bd_referrals WHERE referrer_id = $1 OR referred_id = $1 RETURNING id', [targetUserId]);
     await client.query('COMMIT');
