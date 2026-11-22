@@ -209,9 +209,10 @@ async function returnFromAd(autoReturn=false){
     showModal(`<div class="modal center"><div style="font-size:34px">⚠️</div><h2 class="modal-title">Minimum 8 Seconds Required</h2><p class="modal-text">You returned before 8 seconds. Your ad count was not increased.</p><button class="submit-btn" onclick="closeModal()">CLOSE</button></div>`);
     return;
   }
+  const claimedSession=adSession;
+  adSession='';
   try{
-    const d=await api('/api/ad/claim',{method:'POST',body:JSON.stringify({userId,sessionId:adSession,hiddenSeconds})});
-    adSession='';
+    const d=await api('/api/ad/claim',{method:'POST',body:JSON.stringify({userId,sessionId:claimedSession,hiddenSeconds})});
     setValidAdsCount(d.validAdsCount||0);
     balance=Number(d.balance||0);document.getElementById('balance').textContent=fmt(balance);
     if(d.minerActivated){
