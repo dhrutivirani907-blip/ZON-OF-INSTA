@@ -50,6 +50,7 @@ async function initDb() {
   `);
 
   await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS binance_id TEXT');
+  await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS valid_ads_count BIGINT NOT NULL DEFAULT 0');
 
   await q(`
     CREATE TABLE IF NOT EXISTS bd_user_bans (
@@ -205,11 +206,12 @@ app.get('/api/user/:userId', async (req, res) => {
       RETURNING balance
     `, [userId]);
 
-    const userData = await q('SELECT binance_id FROM bd_users WHERE user_id = $1', [userId]);
+    const userData = await q('SELECT binance_id, valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
     const banData = await q('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
     res.json({
       balance: Number(result.rows[0].balance),
       binanceId: userData.rows[0]?.binance_id || null,
+      validAdsCount: Number(userData.rows[0]?.valid_ads_count || 0),
       banned: !!banData.rowCount,
       banReason: banData.rows[0]?.reason || null
     });
@@ -236,6 +238,28 @@ app.post('/api/binance/save', async (req, res) => {
 });
 
 // -------------------- Start ad timer --------------------
+// Sync legacy client-side ad count without ever lowering the server count.
+app.post('/api/ads/count/sync', async (req, res) => {
+  try {
+    const { userId, localCount } = req.body;
+    const count = Number(localCount);
+    if (!validUserId(userId) || !Number.isSafeInteger(count) || count < 0) {
+      return res.status(400).json({ error: 'Invalid ad count sync' });
+    }
+    await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+    const result = await q(`
+      UPDATE bd_users
+      SET valid_ads_count = GREATEST(valid_ads_count, $2), updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING valid_ads_count
+    `, [userId, count]);
+    res.json({ validAdsCount: Number(result.rows[0].valid_ads_count) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not sync ad count' });
+  }
+});
+
 app.post('/api/ad/start', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -344,16 +368,18 @@ app.post('/api/ad/claim', async (req, res) => {
     const balanceResult = await client.query(`
       UPDATE bd_users
       SET balance = balance + $2,
+          valid_ads_count = valid_ads_count + 1,
           updated_at = NOW()
       WHERE user_id = $1
-      RETURNING balance
+      RETURNING balance, valid_ads_count
     `, [userId, AD_REWARD]);
 
     await client.query('COMMIT');
 
     res.json({
       reward: AD_REWARD,
-      balance: Number(balanceResult.rows[0].balance)
+      balance: Number(balanceResult.rows[0].balance),
+      validAdsCount: Number(balanceResult.rows[0].valid_ads_count)
     });
 
   } catch (err) {
