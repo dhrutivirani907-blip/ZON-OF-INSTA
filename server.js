@@ -54,6 +54,7 @@ async function initDb() {
 
   await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS binance_id TEXT');
   await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS valid_ads_count BIGINT NOT NULL DEFAULT 0');
+  await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS total_miners_activated BIGINT NOT NULL DEFAULT 0');
   await q(`
     CREATE TABLE IF NOT EXISTS bd_user_bans (
       user_id TEXT PRIMARY KEY REFERENCES bd_users(user_id),
@@ -84,6 +85,7 @@ async function initDb() {
   `);
   await q('ALTER TABLE bd_miners ADD COLUMN IF NOT EXISTS credited_seconds BIGINT NOT NULL DEFAULT 0');
   await q('CREATE INDEX IF NOT EXISTS bd_miners_user_active_idx ON bd_miners(user_id, active, expires_at)');
+  await q(`UPDATE bd_users u SET total_miners_activated = GREATEST(u.total_miners_activated, COALESCE((SELECT COUNT(*) FROM bd_miners m WHERE m.user_id = u.user_id), 0))`);
 
   await q(`
     CREATE TABLE IF NOT EXISTS bd_withdrawals (
@@ -243,37 +245,39 @@ async function settleMiners(client, userId) {
   return earned;
 }
 
-async function activatePendingMiners(client, userId) {
-  const userResult = await client.query(
+async function activateCompletedMiners(client, userId) {
+  const result = await client.query(
     'SELECT valid_ads_count FROM bd_users WHERE user_id = $1 FOR UPDATE',
     [userId]
   );
+  if (!result.rowCount) return 0;
 
-  if (!userResult.rowCount) return 0;
+  let count = Number(result.rows[0].valid_ads_count || 0);
+  if (count < ADS_PER_MINER) return 0;
 
-  const validAds = Number(userResult.rows[0].valid_ads_count || 0);
-  const minersToActivate = Math.floor(validAds / ADS_PER_MINER);
-  if (minersToActivate <= 0) return 0;
+  const minersToAdd = Math.floor(count / ADS_PER_MINER);
+  const remainder = count % ADS_PER_MINER;
 
-  for (let i = 0; i < minersToActivate; i++) {
-    await client.query(
-      `INSERT INTO bd_miners (user_id, started_at, expires_at, rate, active, credited_seconds)
-       VALUES ($1, NOW(), NOW() + ($2 * INTERVAL '1 second'), $3, TRUE, 0)`,
-      [userId, MINER_DURATION_SECONDS, MINER_RATE]
-    );
+  for (let i = 0; i < minersToAdd; i++) {
+    await client.query(`
+      INSERT INTO bd_miners (user_id, started_at, expires_at, rate, active, credited_seconds)
+      VALUES ($1, NOW(), NOW() + ($2 * INTERVAL '1 second'), $3, TRUE, 0)
+    `, [userId, MINER_DURATION_SECONDS, MINER_RATE]);
   }
 
-  const remainder = validAds % ADS_PER_MINER;
-  await client.query(
-    'UPDATE bd_users SET valid_ads_count = $2, updated_at = NOW() WHERE user_id = $1',
-    [userId, remainder]
-  );
+  await client.query(`
+    UPDATE bd_users
+    SET valid_ads_count = $2,
+        total_miners_activated = total_miners_activated + $3,
+        updated_at = NOW()
+    WHERE user_id = $1
+  `, [userId, remainder, minersToAdd]);
 
-  return minersToActivate;
+  return minersToAdd;
 }
 
 async function getMinerState(client, userId) {
-  await activatePendingMiners(client, userId);
+  await activateCompletedMiners(client, userId);
   await settleMiners(client, userId);
   const active = await client.query(`
     SELECT id, expires_at, rate
@@ -477,7 +481,10 @@ app.post('/api/ad/claim', async (req, res) => {
       WHERE session_id = $1
     `, [sessionId]);
 
-    const balanceResult = await client.query(`
+    // Count this valid ad. When the count reaches 10, activate one miner
+    // and keep any extra ads as progress toward the next miner. This also
+    // repairs old accounts whose count accidentally went above 10.
+    const countResult = await client.query(`
       UPDATE bd_users
       SET balance = balance + $2,
           valid_ads_count = valid_ads_count + 1,
@@ -486,28 +493,24 @@ app.post('/api/ad/claim', async (req, res) => {
       RETURNING balance, valid_ads_count
     `, [userId, AD_REWARD]);
 
-    // Activate every complete group of 10 ads immediately.
-    const newCount = Number(balanceResult.rows[0].valid_ads_count || 0);
-    let minerActivated = false;
-    if (newCount >= ADS_PER_MINER) {
-      await activatePendingMiners(client, userId);
-      minerActivated = true;
-    }
-
-    const finalUser = await client.query(
-      'SELECT balance, valid_ads_count FROM bd_users WHERE user_id = $1',
+    const balanceValue = Number(countResult.rows[0].balance);
+    const minersActivated = await activateCompletedMiners(client, userId);
+    const countAfterActivation = await client.query(
+      'SELECT valid_ads_count FROM bd_users WHERE user_id = $1',
       [userId]
     );
-    const miner = await getMinerState(client, userId);
+    const validAdsCount = Number(countAfterActivation.rows[0].valid_ads_count || 0);
+    const minerState = await getMinerState(client, userId);
 
     await client.query('COMMIT');
 
     res.json({
       reward: AD_REWARD,
-      balance: Number(finalUser.rows[0].balance),
-      validAdsCount: Number(finalUser.rows[0].valid_ads_count),
-      minerActivated,
-      miner
+      balance: balanceValue,
+      validAdsCount,
+      minerActivated: minersActivated > 0,
+      minersActivated,
+      miner: minerState
     });
 
   } catch (err) {
@@ -1176,12 +1179,20 @@ app.post('/api/admin/unban-binance', adminOnly, async (req, res) => {
 app.get('/api/admin/users', adminOnly, async (req, res) => {
   try {
     const result = await q(`
-      SELECT u.user_id, u.binance_id, u.balance, u.valid_ads_count, u.created_at,
+      SELECT u.user_id, u.binance_id, u.balance, u.valid_ads_count,
+        u.total_miners_activated, u.created_at,
+        COALESCE(m.miner_count, 0)::BIGINT AS miner_count,
         COALESCE(r.referral_count, 0)::BIGINT AS referral_count,
         COALESCE(w.completed_total, 0)::BIGINT AS completed_total,
         COALESCE(w.request_count, 0)::BIGINT AS request_count,
         COALESCE(w.requested_total, 0)::BIGINT AS requested_total
       FROM bd_users u
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) AS miner_count
+        FROM bd_miners
+        WHERE active = TRUE AND expires_at > NOW()
+        GROUP BY user_id
+      ) m ON m.user_id = u.user_id
       LEFT JOIN (SELECT referrer_id, COUNT(*) AS referral_count FROM bd_referrals GROUP BY referrer_id) r ON r.referrer_id = u.user_id
       LEFT JOIN (SELECT user_id, SUM(amount) FILTER (WHERE status = 'complete') AS completed_total,
         COUNT(*) AS request_count, SUM(amount) AS requested_total FROM bd_withdrawals GROUP BY user_id) w ON w.user_id = u.user_id
@@ -1192,7 +1203,9 @@ app.get('/api/admin/users', adminOnly, async (req, res) => {
       balance: Number(row.balance || 0), validAdsCount: Number(row.valid_ads_count || 0),
       createdAt: row.created_at, referrals: Number(row.referral_count || 0),
       totalWithdrawn: Number(row.completed_total || 0),
-      withdrawalRequests: Number(row.request_count || 0), totalRequested: Number(row.requested_total || 0)
+      withdrawalRequests: Number(row.request_count || 0), totalRequested: Number(row.requested_total || 0),
+      totalMinersActivated: Number(row.total_miners_activated || 0),
+      activeMiners: Number(row.miner_count || 0)
     })) });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Could not load user accounts' }); }
 });
