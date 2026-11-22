@@ -32,8 +32,11 @@ app.use(express.static(path.join(__dirname)));
 const adminTokens = new Map();
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 const MIN_WITHDRAW = 2500000;
-const AD_REWARD = 250000;
+const AD_REWARD = 0;
 const MIN_AD_SECONDS = 8;
+const ADS_PER_MINER = 10;
+const MINER_RATE = 1500;
+const MINER_DURATION_SECONDS = 30 * 60;
 
 const q = (sql, params = []) => pool.query(sql, params);
 
@@ -51,7 +54,6 @@ async function initDb() {
 
   await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS binance_id TEXT');
   await q('ALTER TABLE bd_users ADD COLUMN IF NOT EXISTS valid_ads_count BIGINT NOT NULL DEFAULT 0');
-
   await q(`
     CREATE TABLE IF NOT EXISTS bd_user_bans (
       user_id TEXT PRIMARY KEY REFERENCES bd_users(user_id),
@@ -69,6 +71,19 @@ async function initDb() {
       claimed BOOLEAN NOT NULL DEFAULT FALSE
     )
   `);
+
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_miners (
+      id BIGSERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      rate BIGINT NOT NULL DEFAULT 1500,
+      active BOOLEAN NOT NULL DEFAULT TRUE
+    )
+  `);
+  await q('ALTER TABLE bd_miners ADD COLUMN IF NOT EXISTS credited_seconds BIGINT NOT NULL DEFAULT 0');
+  await q('CREATE INDEX IF NOT EXISTS bd_miners_user_active_idx ON bd_miners(user_id, active, expires_at)');
 
   await q(`
     CREATE TABLE IF NOT EXISTS bd_withdrawals (
@@ -187,6 +202,70 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// -------------------- Miner helpers --------------------
+async function settleMiners(client, userId) {
+  const now = Date.now();
+  const rows = await client.query(`
+    SELECT id, started_at, expires_at, rate
+    FROM bd_miners
+    WHERE user_id = $1 AND active = TRUE
+    FOR UPDATE
+  `, [userId]);
+
+  let earned = 0;
+  for (const miner of rows.rows) {
+    const startMs = new Date(miner.started_at).getTime();
+    const expiryMs = new Date(miner.expires_at).getTime();
+    const endMs = Math.min(now, expiryMs);
+    const seconds = Math.max(0, Math.floor((endMs - startMs) / 1000));
+    const creditedSeconds = Number(miner.credited_seconds || 0);
+    // credited_seconds is added below if the column exists; fallback is handled by migration.
+    const deltaSeconds = Math.max(0, seconds - creditedSeconds);
+    if (deltaSeconds > 0) {
+      earned += deltaSeconds * Number(miner.rate || MINER_RATE);
+      await client.query(
+        'UPDATE bd_miners SET started_at = started_at, active = CASE WHEN $2 >= expires_at THEN FALSE ELSE active END, rate = rate, expires_at = expires_at, credited_seconds = $3 WHERE id = $1',
+        [miner.id, new Date(now), seconds]
+      );
+    } else if (now >= expiryMs) {
+      await client.query('UPDATE bd_miners SET active = FALSE WHERE id = $1', [miner.id]);
+    }
+  }
+
+  if (earned > 0) {
+    await client.query(
+      'UPDATE bd_users SET balance = balance + $2, updated_at = NOW() WHERE user_id = $1',
+      [userId, earned]
+    );
+  }
+
+  await client.query('UPDATE bd_miners SET active = FALSE WHERE user_id = $1 AND expires_at <= NOW()', [userId]);
+  return earned;
+}
+
+async function getMinerState(client, userId) {
+  await settleMiners(client, userId);
+  const active = await client.query(`
+    SELECT id, expires_at, rate
+    FROM bd_miners
+    WHERE user_id = $1 AND active = TRUE AND expires_at > NOW()
+    ORDER BY expires_at ASC
+  `, [userId]);
+  const activeMiners = active.rowCount;
+  return {
+    activeMiners,
+    hashRate: activeMiners * MINER_RATE,
+    minerRate: MINER_RATE,
+    durationSeconds: MINER_DURATION_SECONDS,
+    adsPerMiner: ADS_PER_MINER,
+    miners: active.rows.map(r => ({
+      id: r.id,
+      expiresAt: new Date(r.expires_at).toISOString(),
+      rate: Number(r.rate || MINER_RATE)
+    }))
+  };
+}
+
 // -------------------- Balance --------------------
 app.get('/api/user/:userId', async (req, res) => {
   try {
@@ -198,23 +277,26 @@ app.get('/api/user/:userId', async (req, res) => {
       });
     }
 
-    const result = await q(`
-      INSERT INTO bd_users (user_id)
-      VALUES ($1)
-      ON CONFLICT (user_id)
-      DO UPDATE SET updated_at = NOW()
-      RETURNING balance
-    `, [userId]);
-
-    const userData = await q('SELECT binance_id, valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
-    const banData = await q('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
-    res.json({
-      balance: Number(result.rows[0].balance),
-      binanceId: userData.rows[0]?.binance_id || null,
-      validAdsCount: Number(userData.rows[0]?.valid_ads_count || 0),
-      banned: !!banData.rowCount,
-      banReason: banData.rows[0]?.reason || null
-    });
+    await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const minerState = await getMinerState(client, userId);
+      const result = await client.query('SELECT balance FROM bd_users WHERE user_id = $1 FOR UPDATE', [userId]);
+      const userData = await client.query('SELECT binance_id, valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
+      const banData = await client.query('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
+      await client.query('COMMIT');
+      res.json({
+        balance: Number(result.rows[0].balance),
+        binanceId: userData.rows[0]?.binance_id || null,
+        validAdsCount: Number(userData.rows[0]?.valid_ads_count || 0),
+        banned: !!banData.rowCount,
+        banReason: banData.rows[0]?.reason || null,
+        miner: minerState
+      });
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error(err);
 
@@ -391,6 +473,32 @@ app.post('/api/ad/claim', async (req, res) => {
       error: 'Could not claim reward'
     });
 
+  } finally {
+    client.release();
+  }
+});
+
+// -------------------- Miner API --------------------
+app.get('/api/miner/state/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  if (!validUserId(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+  await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const miner = await getMinerState(client, userId);
+    const balance = await client.query('SELECT balance FROM bd_users WHERE user_id = $1', [userId]);
+    const ads = await client.query('SELECT valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
+    await client.query('COMMIT');
+    res.json({
+      balance: Number(balance.rows[0].balance),
+      validAdsCount: Number(ads.rows[0].valid_ads_count || 0),
+      miner
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Could not load miner state' });
   } finally {
     client.release();
   }
@@ -1053,6 +1161,7 @@ app.post('/api/admin/users/:userId/reset', adminOnly, async (req, res) => {
     const found = await client.query('SELECT user_id, binance_id FROM bd_users WHERE user_id = $1 FOR UPDATE', [targetUserId]);
     if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Account not found' }); }
     await client.query('UPDATE bd_users SET balance = 0, valid_ads_count = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
+    await client.query('DELETE FROM bd_miners WHERE user_id = $1', [targetUserId]);
     const withdrawals = await client.query('DELETE FROM bd_withdrawals WHERE user_id = $1 RETURNING id', [targetUserId]);
     const referrals = await client.query('DELETE FROM bd_referrals WHERE referrer_id = $1 OR referred_id = $1 RETURNING id', [targetUserId]);
     await client.query('COMMIT');
@@ -1073,6 +1182,7 @@ app.post('/api/admin/reset-binance', adminOnly, async (req, res) => {
     if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'No account found for this Binance ID' }); }
     const targetUserId = found.rows[0].user_id;
     await client.query('UPDATE bd_users SET balance = 0, valid_ads_count = 0, updated_at = NOW() WHERE user_id = $1', [targetUserId]);
+    await client.query('DELETE FROM bd_miners WHERE user_id = $1', [targetUserId]);
     const withdrawals = await client.query('DELETE FROM bd_withdrawals WHERE user_id = $1 RETURNING id', [targetUserId]);
     const referrals = await client.query('DELETE FROM bd_referrals WHERE referrer_id = $1 OR referred_id = $1 RETURNING id', [targetUserId]);
     await client.query('COMMIT');
