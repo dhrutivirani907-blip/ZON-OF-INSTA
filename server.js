@@ -182,6 +182,14 @@ async function initDb() {
     )
   `);
 
+  await q(`
+    CREATE TABLE IF NOT EXISTS bd_super_offer_quotes (
+      user_id TEXT PRIMARY KEY REFERENCES bd_users(user_id) ON DELETE CASCADE,
+      ticket_cost BIGINT NOT NULL CHECK (ticket_cost BETWEEN 25 AND 35),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
   const defaultTask = await q(
     'SELECT id FROM bd_tasks WHERE active = TRUE ORDER BY id ASC LIMIT 1'
   );
@@ -243,139 +251,23 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// -------------------- Miner helpers --------------------
-async function settleMiners(client, userId) {
-  const now = Date.now();
-  const rows = await client.query(`
-    SELECT id, started_at, expires_at, rate, credited_seconds
-    FROM bd_miners
-    WHERE user_id = $1 AND active = TRUE
-    FOR UPDATE
-  `, [userId]);
-
-  let earned = 0;
-  for (const miner of rows.rows) {
-    const startMs = new Date(miner.started_at).getTime();
-    const expiryMs = new Date(miner.expires_at).getTime();
-    const endMs = Math.min(now, expiryMs);
-    const seconds = Math.max(0, Math.floor((endMs - startMs) / 1000));
-    const creditedSeconds = Number(miner.credited_seconds || 0);
-    // credited_seconds is added below if the column exists; fallback is handled by migration.
-    const deltaSeconds = Math.max(0, seconds - creditedSeconds);
-    if (deltaSeconds > 0) {
-      earned += deltaSeconds * Number(miner.rate || MINER_RATE);
-      await client.query(
-        'UPDATE bd_miners SET started_at = started_at, active = CASE WHEN $2 >= expires_at THEN FALSE ELSE active END, rate = rate, expires_at = expires_at, credited_seconds = $3 WHERE id = $1',
-        [miner.id, new Date(now), seconds]
-      );
-    } else if (now >= expiryMs) {
-      await client.query('UPDATE bd_miners SET active = FALSE WHERE id = $1', [miner.id]);
-    }
-  }
-
-  if (earned > 0) {
-    await client.query(
-      'UPDATE bd_users SET balance = balance + $2, updated_at = NOW() WHERE user_id = $1',
-      [userId, earned]
-    );
-  }
-
-  await client.query('UPDATE bd_miners SET active = FALSE WHERE user_id = $1 AND expires_at <= NOW()', [userId]);
-  return earned;
-}
-
-async function activateCompletedMiners(client, userId) {
-  const result = await client.query(
-    'SELECT valid_ads_count FROM bd_users WHERE user_id = $1 FOR UPDATE',
-    [userId]
-  );
-  if (!result.rowCount) return 0;
-
-  let count = Number(result.rows[0].valid_ads_count || 0);
-  if (count < ADS_PER_MINER) return 0;
-
-  const minersToAdd = Math.floor(count / ADS_PER_MINER);
-  const remainder = count % ADS_PER_MINER;
-
-  for (let i = 0; i < minersToAdd; i++) {
-    await client.query(`
-      INSERT INTO bd_miners (user_id, started_at, expires_at, rate, active, credited_seconds)
-      VALUES ($1, NOW(), NOW() + ($2 * INTERVAL '1 second'), $3, TRUE, 0)
-    `, [userId, MINER_DURATION_SECONDS, MINER_RATE]);
-  }
-
-  await client.query(`
-    UPDATE bd_users
-    SET valid_ads_count = $2,
-        total_miners_activated = total_miners_activated + $3,
-        updated_at = NOW()
-    WHERE user_id = $1
-  `, [userId, remainder, minersToAdd]);
-
-  return minersToAdd;
-}
-
-async function getMinerState(client, userId) {
-  await activateCompletedMiners(client, userId);
-  await settleMiners(client, userId);
-  const active = await client.query(`
-    SELECT id, expires_at, rate
-    FROM bd_miners
-    WHERE user_id = $1 AND active = TRUE AND expires_at > NOW()
-    ORDER BY expires_at ASC
-  `, [userId]);
-  const activeMiners = active.rowCount;
-  return {
-    activeMiners,
-    hashRate: activeMiners * MINER_RATE,
-    minerRate: MINER_RATE,
-    durationSeconds: MINER_DURATION_SECONDS,
-    adsPerMiner: ADS_PER_MINER,
-    miners: active.rows.map(r => ({
-      id: r.id,
-      expiresAt: new Date(r.expires_at).toISOString(),
-      rate: Number(r.rate || MINER_RATE)
-    }))
-  };
-}
-
-// -------------------- Balance --------------------
+// -------------------- Balance / Account --------------------
 app.get('/api/user/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
-
-    if (!validUserId(userId)) {
-      return res.status(400).json({
-        error: 'Invalid user ID'
-      });
-    }
-
+    if (!validUserId(userId)) return res.status(400).json({ error: 'Invalid user ID' });
     await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const minerState = await getMinerState(client, userId);
-      const result = await client.query('SELECT balance FROM bd_users WHERE user_id = $1 FOR UPDATE', [userId]);
-      const userData = await client.query('SELECT binance_id, valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
-      const banData = await client.query('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
-      await client.query('COMMIT');
-      res.json({
-        balance: Number(result.rows[0].balance),
-        binanceId: userData.rows[0]?.binance_id || null,
-        validAdsCount: Number(userData.rows[0]?.valid_ads_count || 0),
-        banned: !!banData.rowCount,
-        banReason: banData.rows[0]?.reason || null,
-        miner: minerState
-      });
-    } finally {
-      client.release();
-    }
+    const result = await q('SELECT balance, binance_id FROM bd_users WHERE user_id = $1', [userId]);
+    const banData = await q('SELECT reason, banned_at FROM bd_user_bans WHERE user_id = $1', [userId]);
+    res.json({
+      balance: Number(result.rows[0]?.balance || 0),
+      binanceId: result.rows[0]?.binance_id || null,
+      banned: !!banData.rowCount,
+      banReason: banData.rows[0]?.reason || null
+    });
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: 'Could not load account'
-    });
+    res.status(500).json({ error: 'Could not load account' });
   }
 });
 
@@ -392,205 +284,7 @@ app.post('/api/binance/save', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Could not save Binance ID' }); }
 });
 
-// -------------------- Start ad timer --------------------
-// Sync legacy client-side ad count without ever lowering the server count.
-app.post('/api/ads/count/sync', async (req, res) => {
-  try {
-    const { userId, localCount } = req.body;
-    const count = Number(localCount);
-    if (!validUserId(userId) || !Number.isSafeInteger(count) || count < 0) {
-      return res.status(400).json({ error: 'Invalid ad count sync' });
-    }
-    await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
-    const result = await q(`
-      UPDATE bd_users
-      SET valid_ads_count = GREATEST(valid_ads_count, $2), updated_at = NOW()
-      WHERE user_id = $1
-      RETURNING valid_ads_count
-    `, [userId, count]);
-    res.json({ validAdsCount: Number(result.rows[0].valid_ads_count) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Could not sync ad count' });
-  }
-});
-
-app.post('/api/ad/start', async (req, res) => {
-  try {
-    const { userId } = req.body;
-
-    if (!validUserId(userId)) {
-      return res.status(400).json({
-        error: 'Invalid user ID'
-      });
-    }
-
-    await q(
-      'INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING',
-      [userId]
-    );
-
-    const sessionId = crypto.randomUUID();
-
-    await q(
-      `INSERT INTO bd_ad_sessions
-       (session_id, user_id)
-       VALUES ($1, $2)`,
-      [sessionId, userId]
-    );
-
-    res.json({
-      sessionId
-    });
-  } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      error: 'Could not start ad session'
-    });
-  }
-});
-
-// -------------------- Claim ad reward --------------------
-app.post('/api/ad/claim', async (req, res) => {
-  const {
-    userId,
-    sessionId,
-    hiddenSeconds
-  } = req.body;
-
-  if (!validUserId(userId) || typeof sessionId !== 'string') {
-    return res.status(400).json({
-      error: 'Invalid ad session'
-    });
-  }
-
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    const sessionResult = await client.query(`
-      SELECT *
-      FROM bd_ad_sessions
-      WHERE session_id = $1
-      AND user_id = $2
-      FOR UPDATE
-    `, [sessionId, userId]);
-
-    if (!sessionResult.rowCount) {
-      await client.query('ROLLBACK');
-
-      return res.status(400).json({
-        error: 'Ad session not found'
-      });
-    }
-
-    const session = sessionResult.rows[0];
-
-    if (session.claimed) {
-      await client.query('ROLLBACK');
-
-      return res.status(400).json({
-        error: 'This ad session has already been claimed'
-      });
-    }
-
-    const elapsedSeconds =
-      (Date.now() - new Date(session.started_at).getTime()) / 1000;
-
-    const awaySeconds = Number(hiddenSeconds);
-
-    if (
-      !Number.isFinite(awaySeconds) ||
-      awaySeconds < MIN_AD_SECONDS ||
-      elapsedSeconds < MIN_AD_SECONDS
-    ) {
-      await client.query('ROLLBACK');
-
-      return res.status(400).json({
-        error: 'Please watch for at least 8 seconds'
-      });
-    }
-
-    await client.query(`
-      UPDATE bd_ad_sessions
-      SET claimed = TRUE,
-          claimed_at = NOW()
-      WHERE session_id = $1
-    `, [sessionId]);
-
-    // Count this valid ad. When the count reaches 10, activate one miner
-    // and keep any extra ads as progress toward the next miner. This also
-    // repairs old accounts whose count accidentally went above 10.
-    const countResult = await client.query(`
-      UPDATE bd_users
-      SET balance = balance + $2,
-          valid_ads_count = valid_ads_count + 1,
-          updated_at = NOW()
-      WHERE user_id = $1
-      RETURNING balance, valid_ads_count
-    `, [userId, AD_REWARD]);
-
-    const balanceValue = Number(countResult.rows[0].balance);
-    const minersActivated = await activateCompletedMiners(client, userId);
-    const countAfterActivation = await client.query(
-      'SELECT valid_ads_count FROM bd_users WHERE user_id = $1',
-      [userId]
-    );
-    const validAdsCount = Number(countAfterActivation.rows[0].valid_ads_count || 0);
-    const minerState = await getMinerState(client, userId);
-
-    await client.query('COMMIT');
-
-    res.json({
-      reward: AD_REWARD,
-      balance: balanceValue,
-      validAdsCount,
-      minerActivated: minersActivated > 0,
-      minersActivated,
-      miner: minerState
-    });
-
-  } catch (err) {
-    await client.query('ROLLBACK');
-
-    console.error(err);
-
-    res.status(500).json({
-      error: 'Could not claim reward'
-    });
-
-  } finally {
-    client.release();
-  }
-});
-
-// -------------------- Miner API --------------------
-app.get('/api/miner/state/:userId', async (req, res) => {
-  const userId = req.params.userId;
-  if (!validUserId(userId)) return res.status(400).json({ error: 'Invalid user ID' });
-  await q('INSERT INTO bd_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const miner = await getMinerState(client, userId);
-    const balance = await client.query('SELECT balance FROM bd_users WHERE user_id = $1', [userId]);
-    const ads = await client.query('SELECT valid_ads_count FROM bd_users WHERE user_id = $1', [userId]);
-    await client.query('COMMIT');
-    res.json({
-      balance: Number(balance.rows[0].balance),
-      validAdsCount: Number(ads.rows[0].valid_ads_count || 0),
-      miner
-    });
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error(err);
-    res.status(500).json({ error: 'Could not load miner state' });
-  } finally {
-    client.release();
-  }
-});
+// Legacy miner/ad activation system removed. Ticket ads are handled by the ticket reward API below.
 
 // -------------------- Submit withdrawal --------------------
 app.post('/api/withdraw', async (req, res) => {
@@ -740,7 +434,8 @@ app.get('/api/referrals/:userId', async (req, res) => {
 });
 
 app.post('/api/referrals/claim', async (req, res) => {
-  const { userId, referrerId } = req.body || {};
+  const userId = String(req.body?.userId || '').trim();
+  const referrerId = String(req.body?.referrerId || '').trim().replace(/^ref_/i, '');
   if (!validUserId(userId) || !validUserId(referrerId)) {
     return res.status(400).json({ error: 'Invalid referral information' });
   }
@@ -787,6 +482,12 @@ app.get('/api/tickets/:userId', async (req, res) => {
     await q('INSERT INTO bd_users(user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
     await q('INSERT INTO bd_tickets(user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId]);
     const balance = await q('SELECT balance FROM bd_tickets WHERE user_id = $1', [userId]);
+    const pendingCheck = await q('SELECT id FROM bd_super_offers WHERE user_id = $1 AND claimed = FALSE LIMIT 1', [userId]);
+    if (!pendingCheck.rowCount) {
+      const quoteCost = 25 + Math.floor(Math.random() * 11);
+      await q(`INSERT INTO bd_super_offer_quotes(user_id, ticket_cost) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING`, [userId, quoteCost]);
+    }
+    const quote = await q('SELECT ticket_cost FROM bd_super_offer_quotes WHERE user_id = $1', [userId]);
     const history = await q(`
       SELECT id, coin_amount, ticket_cost, claimed_at
       FROM bd_super_offers
@@ -803,6 +504,7 @@ app.get('/api/tickets/:userId', async (req, res) => {
     `, [userId]);
     res.json({
       ticketBalance: Number(balance.rows[0]?.balance || 0),
+      currentOfferTicketCost: pending.rowCount ? Number(pending.rows[0].ticket_cost) : Number(quote.rows[0]?.ticket_cost || 30),
       pendingOffer: pending.rowCount ? {
         id: Number(pending.rows[0].id),
         coinAmount: Number(pending.rows[0].coin_amount),
@@ -908,15 +610,24 @@ app.post('/api/super-offer/unlock', async (req, res) => {
       return res.status(400).json({ error: 'You already have an unlocked super offer. Claim it first.' });
     }
 
+    let quote = await client.query(`SELECT ticket_cost FROM bd_super_offer_quotes WHERE user_id = $1 FOR UPDATE`, [userId]);
+    if (!quote.rowCount) {
+      const generatedCost = 25 + Math.floor(Math.random() * 11);
+      await client.query(`INSERT INTO bd_super_offer_quotes(user_id, ticket_cost) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING`, [userId, generatedCost]);
+      quote = await client.query(`SELECT ticket_cost FROM bd_super_offer_quotes WHERE user_id = $1 FOR UPDATE`, [userId]);
+    }
+    const ticketCost = Number(quote.rows[0]?.ticket_cost || 30);
+
     const ticketRow = await client.query(`
       SELECT balance FROM bd_tickets WHERE user_id = $1 FOR UPDATE
     `, [userId]);
     const ticketBalance = Number(ticketRow.rows[0]?.balance || 0);
-    if (ticketBalance < SUPER_OFFER_TICKET_COST) {
+    if (ticketBalance < ticketCost) {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        error: 'You need 30 tickets to unlock the super offer',
-        ticketBalance
+        error: `You need ${ticketCost} tickets to unlock the super offer`,
+        ticketBalance,
+        ticketCost
       });
     }
 
@@ -924,22 +635,23 @@ app.post('/api/super-offer/unlock', async (req, res) => {
       UPDATE bd_tickets
       SET balance = balance - $2, updated_at = NOW()
       WHERE user_id = $1
-    `, [userId, SUPER_OFFER_TICKET_COST]);
+    `, [userId, ticketCost]);
 
     const offer = await client.query(`
       INSERT INTO bd_super_offers(user_id, coin_amount, ticket_cost, claimed, unlocked_at)
       VALUES ($1, $2, $3, FALSE, NOW())
       RETURNING id, unlocked_at
-    `, [userId, SUPER_OFFER_COINS, SUPER_OFFER_TICKET_COST]);
+    `, [userId, SUPER_OFFER_COINS, ticketCost]);
+    await client.query('DELETE FROM bd_super_offer_quotes WHERE user_id = $1', [userId]);
 
     await client.query('COMMIT');
     res.json({
       success: true,
       unlocked: true,
-      ticketBalance: ticketBalance - SUPER_OFFER_TICKET_COST,
+      ticketBalance: ticketBalance - ticketCost,
       offerId: Number(offer.rows[0].id),
       coinAmount: SUPER_OFFER_COINS,
-      ticketCost: SUPER_OFFER_TICKET_COST,
+      ticketCost,
       unlockedAt: offer.rows[0].unlocked_at
     });
   } catch (err) {
