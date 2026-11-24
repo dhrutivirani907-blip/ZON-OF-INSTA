@@ -1,642 +1,457 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#06140e">
-<title>BabyDoge Rewards</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#090909"><title>BabyDoge Rewards</title>
 <style>
-:root{
-  --bg:#06140e;--bg2:#0a1d14;--panel:#0d2419;--panel2:#102c20;
-  --line:rgba(111,255,185,.14);--muted:#8fa99b;--white:#f5fff9;
-  --green:#55f0a6;--green2:#16bd73;--deep:#062719;--danger:#ff7380;
+:root{--bg:#070707;--gold:#f5c544;--gold2:#ffe78c;--amber:#b87c15;--panel:#131313;--muted:#a9a18a;--line:#423315;--green:#70dfa1;--red:#ff8c8c}*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-height:100vh;color:#f8f2df;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(ellipse 70% 42% at 50% -7%,#4c370c50,transparent 72%),radial-gradient(ellipse at 50% 35%,#15120b 0,#070707 65%);overflow-x:hidden}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.12;background-image:radial-gradient(#d9b65a .65px,transparent .65px);background-size:22px 22px;mask-image:linear-gradient(to bottom,#000,transparent 80%)}#app{width:min(100%,510px);margin:auto;min-height:100vh;padding:19px 16px 38px;position:relative}.topbar{display:flex;align-items:center;justify-content:space-between;margin:3px 1px 24px}.brand{font-size:14px;font-weight:950;letter-spacing:2.3px;color:#ffda69;text-shadow:0 0 18px #f3c33d32}.brand small{display:block;font-size:9px;letter-spacing:3px;color:#92835a;margin-top:5px;font-weight:700}.profile-btn{height:43px;width:43px;border-radius:15px;border:1px solid #6b501c;background:linear-gradient(145deg,#201b0d,#101010);color:#f9d15b;font-size:18px;box-shadow:0 0 20px #e2b53612;transition:.2s}.profile-btn:active{transform:scale(.94)}.screen{display:none}.screen.active{display:block;animation:screenin .35s ease}@keyframes screenin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}.balance-card{position:relative;overflow:hidden;border-radius:27px;padding:20px 19px 18px;background:linear-gradient(135deg,#211a09 0%,#17150f 30%,#111 68%,#0a0a0a 100%);border:1px solid #80601d;box-shadow:0 18px 46px #000a,inset 0 1px #ffe88b20,inset 0 0 32px #d8a5220a;min-height:164px}.balance-card:before{content:"";position:absolute;inset:-70%;background:linear-gradient(110deg,transparent 42%,#ffdf7820 50%,transparent 58%);animation:cardshine 8s linear infinite;pointer-events:none}@keyframes cardshine{to{transform:translateX(35%) rotate(8deg)}}.balance-card:after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;right:-85px;bottom:-128px;border:1px solid #e4b74020;box-shadow:0 0 0 16px #d8a32a08,0 0 0 35px #d8a32a05;pointer-events:none}.coin-row{display:flex;align-items:center;gap:13px;position:relative;z-index:1}.coin{width:69px;height:69px;flex:none;filter:drop-shadow(0 0 13px #f7c7434a);animation:coinbob 4s ease-in-out infinite}.coin img{width:100%;height:100%;object-fit:contain}@keyframes coinbob{50%{transform:translateY(-4px) rotate(1deg)}}.balance-info{min-width:0}.balance-label{font-size:10px;text-transform:uppercase;letter-spacing:1.9px;color:#c2ac68;font-weight:800}.balance{font-size:clamp(28px,8vw,37px);font-weight:950;letter-spacing:-1.1px;line-height:1.12;margin:7px 0 3px;color:#fff3b7;text-shadow:0 0 18px #ffdb5b18;word-break:break-word}.currency{font-size:10px;letter-spacing:1.4px;color:#d8b648;font-weight:800}.card-footer{position:relative;z-index:1;margin-top:19px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #66501e60;padding-top:12px}.wallet-pill{display:flex;align-items:center;gap:7px;color:#c9bd9a;font-size:10px;letter-spacing:.6px}.live-dot{width:6px;height:6px;background:#77dfa0;border-radius:50%;box-shadow:0 0 9px #77dfa0;display:inline-block}.card-foot-right{color:#9b8a5a;font-size:10px}
+/* Fine white spider silk, coin suspended from a real vertical strand */.web-coin{position:absolute;right:1px;top:-3px;width:116px;height:150px;z-index:2;transform-origin:top center;animation:websway 6.2s ease-in-out infinite}.web-coin svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.web-coin img{position:absolute;top:99px;left:41px;width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 3px 6px #000) drop-shadow(0 0 7px #f4c44040);transform-origin:top center;animation:pendulum 4.1s ease-in-out infinite}@keyframes websway{0%,100%{transform:rotate(2deg)}50%{transform:rotate(-2deg)}}@keyframes pendulum{0%,100%{transform:rotate(7deg)}50%{transform:rotate(-9deg)}}.reward-wrap{margin:25px 0 15px;padding:0;position:relative;isolation:isolate}@keyframes ringrotate{to{transform:rotate(360deg)}}.watch-btn{position:relative;width:100%;height:65px;border:1px solid #f9e49a;border-radius:18px;background:linear-gradient(115deg,#e4ad29,#ffe98c 48%,#c98e1a);color:#211704;font-size:16px;font-weight:950;letter-spacing:1px;box-shadow:0 10px 32px #e0ae2b22,inset 0 1px #fff7c7;transition:transform .18s,filter .18s;overflow:hidden}.watch-btn:active{transform:scale(.985)}.watch-btn:before{content:"";position:absolute;inset:1px;border-radius:17px;border:1px solid #fff6bd55}.play{font-size:15px;margin-right:10px}.watch-btn.loading{opacity:.7;pointer-events:none}.info{border:1px solid #2c2618;border-radius:19px;background:linear-gradient(145deg,#151515,#0e0e0e);padding:15px 16px;box-shadow:inset 0 1px #ffffff06}.info p{margin:7px 0;display:flex;gap:9px;align-items:center;color:#d6ccb0;font-size:13px;line-height:1.55}.info b{color:#ffdf7a}.section-head{font-size:25px;font-weight:950;color:#ffdf7c;margin:6px 0 17px;letter-spacing:-.4px}.withdraw-card{position:relative;border-radius:23px;padding:2px;overflow:hidden;margin-bottom:15px}.withdraw-card:before{content:"";position:absolute;inset:-80%;background:conic-gradient(from 0deg,#ffe68c 0 12deg,transparent 12deg 47deg,#bd8520 47deg 57deg,transparent 57deg 90deg);animation:ringrotate 12s linear infinite}.withdraw-inner{position:relative;background:linear-gradient(145deg,#201b0d,#121212 50%,#090909);border:1px solid #4c3917;border-radius:21px;padding:18px}.fieldbox{background:linear-gradient(140deg,#151515,#0d0d0d);border:1px solid #40341c;border-radius:15px;padding:13px 14px;margin-bottom:12px}.fieldbox label{display:block;color:#b8a267;font-size:10px;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:8px;font-weight:800}.fieldbox input{width:100%;background:transparent;border:0;outline:0;color:#fff;font-size:16px}.fieldbox input::placeholder{color:#777}.submit-btn{width:100%;border:0;background:linear-gradient(115deg,#e3ad2e,#ffe98a,#c88d19);color:#1a1203;font-weight:950;letter-spacing:.65px;border-radius:14px;padding:15px;box-shadow:0 6px 22px #e1b42a20}.hint{font-size:11px;color:#a79a78;line-height:1.6;margin:12px 2px 0}.hint b{color:#ffe078}.request-list{margin-top:23px}.request-item,.admin-row{border:1px solid #332a18;background:linear-gradient(145deg,#151515,#0e0e0e);border-radius:16px;padding:14px;margin:10px 0}.req-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.req-amount{font-weight:900;color:#ffdf76}.status{font-size:10px;padding:5px 9px;border-radius:30px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}.status.pending{background:#493716;color:#f7ca58}.status.complete{background:#123b24;color:#85edaa}.status.reject{background:#451e1e;color:#ff9292}.req-meta{font-size:12px;color:#aaa;line-height:1.75;margin-top:8px;word-break:break-word}.back-btn{border:1px solid #49391a;background:#151515;color:#d8bd69;border-radius:12px;padding:10px 13px;margin:0 0 16px;font-weight:700}.page-content{border:1px solid #332b18;background:linear-gradient(145deg,#171717,#0d0d0d);border-radius:20px;padding:20px;line-height:1.7;color:#d4ccb3}.page-content a{color:#ffe17b}.admin-list{max-height:58vh;overflow:auto;margin-top:14px}.admin-row select{background:#171717;color:#ffe08a;border:1px solid #50401c;border-radius:10px;padding:10px;margin-top:10px;width:100%}.empty{color:#817b6b;text-align:center;padding:18px 8px;font-size:13px}.modal-back{position:fixed;inset:0;background:#000c;backdrop-filter:blur(11px);display:none;align-items:center;justify-content:center;padding:18px;z-index:30}.modal-back.show{display:flex}.modal{width:100%;max-width:410px;background:linear-gradient(150deg,#211b0c,#111 55%,#080808);border:1px solid #80621f;border-radius:24px;padding:22px;box-shadow:0 22px 90px #000d,0 0 30px #f1c64a12;animation:pop .25s ease}.modal.center{text-align:center}@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}.modal-title{font-size:20px;font-weight:950;color:#ffdf80;margin:0 0 12px}.modal-text{color:#d5ccb1;line-height:1.65;font-size:14px}.secondary{border:1px solid #4b3b1a;background:#181818;color:#e9d28a;border-radius:12px;padding:12px;font-weight:800}.profile-actions{display:grid;gap:10px}.profile-actions button{width:100%;padding:14px}.gold-line{height:1px;background:linear-gradient(90deg,transparent,#ad8429,transparent);margin:17px 0}.mini-title{color:#ad9860;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;font-weight:900;margin-bottom:9px}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a1710;border:1px solid #70541d;color:#ffe18a;border-radius:14px;padding:12px 18px;z-index:50;display:none;max-width:90%;text-align:center}.loading{opacity:.65;pointer-events:none}@media(min-width:430px){#app{padding-top:24px}.balance-card{padding:22px}.coin{width:76px;height:76px}}
+
+/* Upgrade details: deep premium glass, clearer spacing and clean non-rotating CTA */
+.balance-card{backdrop-filter:blur(10px)}
+.balance-card .coin{width:76px;height:76px}
+.valid-ads-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:16px 18px;border:1px solid #49391a;border-radius:18px;background:linear-gradient(145deg,#18150d,#101010);box-shadow:inset 0 1px #ffffff08}.valid-ads-label{font-size:10px;color:#b8a267;text-transform:uppercase;letter-spacing:1.5px;font-weight:900}.valid-ads-sub{font-size:11px;color:#96896a;margin-top:5px}.valid-ads-count{font-size:27px;font-weight:950;color:#ffdf7a;min-width:48px;text-align:right;text-shadow:0 0 14px #f4c74422}
+.watch-btn:after{content:"";position:absolute;top:-40%;bottom:-40%;left:-45%;width:30%;background:linear-gradient(90deg,transparent,#fff8cf80,transparent);transform:skewX(-22deg);animation:buttonshine 5.8s ease-in-out infinite}
+@keyframes buttonshine{0%,62%{left:-45%}88%,100%{left:125%}}
+.info{position:relative;overflow:hidden}.info:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(transparent,#e8bb43,transparent);opacity:.65}
+.section-head{display:flex;align-items:center;gap:10px}.section-head:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#7b5b20,transparent)}
+.fieldbox:focus-within{border-color:#c59b35;box-shadow:0 0 0 3px #e5b93a12}
+.submit-btn{transition:transform .18s,filter .18s}.submit-btn:active{transform:scale(.985);filter:brightness(.95)}
+.profile-btn{box-shadow:0 0 24px #e2b53612,inset 0 1px #ffffff0a}
+@media(max-width:380px){.balance-card{padding:18px 15px}.coin{width:62px;height:62px}.web-coin{right:-4px;transform:scale(.92);transform-origin:top right}.balance{font-size:27px}.brand{letter-spacing:1.7px}}
+
+.task-section{margin-top:24px}.task-card{position:relative;border:1px solid #80601d;border-radius:22px;padding:2px;overflow:hidden;background:#0d0d0d;box-shadow:0 14px 40px #0009}.task-card:before{content:"";position:absolute;inset:-80%;background:conic-gradient(from 0deg,#ffe68c 0 12deg,transparent 12deg 55deg,#bd8520 55deg 67deg,transparent 67deg 90deg);animation:ringrotate 14s linear infinite}.task-inner{position:relative;border-radius:20px;background:linear-gradient(145deg,#201b0d,#121212 52%,#090909);padding:18px}.task-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.task-name{font-size:17px;font-weight:950;color:#fff0b0;letter-spacing:.5px}.task-reward{font-size:16px;font-weight:950;color:#ffdf76;white-space:nowrap}.task-desc{font-size:11px;color:#a99d7e;margin:8px 0 14px}.task-btn{width:100%;border:1px solid #f9e49a;border-radius:13px;padding:13px;background:linear-gradient(115deg,#e3ad2e,#ffe98a,#c88d19);color:#1a1203;font-weight:950;letter-spacing:.7px}.task-btn.claim{background:linear-gradient(115deg,#b7f5cc,#70dfa1,#4dbd7d);color:#07180d;border-color:#b8f5cf}.task-list{display:grid;gap:12px}.task-admin-row{border:1px solid #332a18;background:linear-gradient(145deg,#151515,#0e0e0e);border-radius:16px;padding:14px}.task-admin-row input{width:100%;margin-top:8px;background:#0b0b0b;border:1px solid #40341c;border-radius:10px;color:#fff;padding:11px;outline:none}.danger-btn{width:100%;margin-top:8px;border:1px solid #5b2525;background:#241111;color:#ff9b9b;border-radius:10px;padding:10px;font-weight:800}
+
+/* Redesigned app navigation + page layouts */
+.bottom-nav{position:fixed;z-index:25;bottom:0;left:0;right:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#080808ee,#050505f7);backdrop-filter:blur(18px);border-top:1px solid #3c3018;display:flex;justify-content:center}.nav-inner{width:min(100%,510px);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.nav-item{border:1px solid transparent;background:transparent;color:#9c9278;border-radius:15px;padding:9px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.5px;transition:.2s}.nav-icon{font-size:19px;line-height:1.1}.nav-item.active{color:#ffe38a;background:linear-gradient(145deg,#28200d,#14120c);border-color:#70551c;box-shadow:inset 0 1px #ffe78a18,0 5px 18px #0006}#app{padding-bottom:110px}.screen.active{padding-bottom:8px}.page-intro{margin:4px 0 18px}.page-subtitle{color:#a79b7a;font-size:12px;line-height:1.5;margin-top:6px}.refer-hero,.tasks-hero{border:1px solid #66501e;border-radius:23px;background:radial-gradient(ellipse at 90% 0%,#7b5b1b28,transparent 55%),linear-gradient(145deg,#1b180e,#101010 65%);padding:18px;margin-bottom:15px;box-shadow:inset 0 1px #ffffff08,0 12px 28px #0006}.hero-symbol{font-size:27px;margin-bottom:9px}.hero-big{font-size:23px;font-weight:950;color:#ffe28a;letter-spacing:-.5px}.hero-small{font-size:12px;color:#b5a784;line-height:1.55;margin-top:7px}.refer-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.stat-card{border:1px solid #332a18;border-radius:16px;padding:14px;background:linear-gradient(145deg,#151515,#0b0b0b)}.stat-label{font-size:10px;color:#a99a70;text-transform:uppercase;letter-spacing:1px;font-weight:800}.stat-value{font-size:20px;color:#ffdf76;font-weight:950;margin-top:7px}.ref-card{border:1px solid #4b3a18;border-radius:20px;background:#101010;padding:16px;margin-bottom:14px}.ref-link-box{border:1px solid #3b3019;background:#090909;border-radius:13px;padding:12px;color:#ffe28a;font-size:12px;line-height:1.5;word-break:break-all;margin:10px 0 12px}.page-title{font-size:25px;font-weight:950;color:#ffdf7c;letter-spacing:-.5px;margin:0}.task-list{gap:13px}.task-card{box-shadow:0 10px 28px #0006}.task-inner{padding:17px}.task-name{font-size:16px;line-height:1.35}.task-desc{font-size:12px;line-height:1.55}.withdraw-entry{margin-top:16px}.screen#home .info{margin-top:14px}@media(max-width:380px){.nav-item{padding:8px 3px;font-size:9px}.nav-icon{font-size:17px}.hero-big{font-size:21px}}
+
+ .admin4-users{max-height:62vh;overflow:auto;margin-top:12px}.admin4-user{border:1px solid #49391a;background:linear-gradient(145deg,#18150d,#0d0d0d);border-radius:16px;padding:13px;margin:10px 0}.admin4-user-title{font-size:13px;font-weight:900;color:#ffdf80;overflow-wrap:anywhere}.admin4-user-meta{font-size:11px;color:#b9ae91;line-height:1.7;margin-top:8px;overflow-wrap:anywhere}.admin4-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.admin4-stat{border:1px solid #342a18;border-radius:10px;padding:9px;background:#0a0a0a}.admin4-stat-label{font-size:9px;color:#9f906b;text-transform:uppercase;letter-spacing:1px}.admin4-stat-value{font-size:13px;color:#ffe18a;font-weight:900;margin-top:4px;overflow-wrap:anywhere}.admin4-reset{width:100%;border:1px solid #8b3333;background:linear-gradient(140deg,#391515,#1b0b0b);color:#ffaaaa;border-radius:11px;padding:11px;font-weight:900;margin-top:10px}
+.miner-card{position:relative;border:1px solid #80601d;border-radius:23px;padding:2px;overflow:hidden;margin-top:18px;background:#0d0d0d;box-shadow:0 15px 42px #0009}
+.miner-card>*{position:relative}.miner-card{isolation:isolate}.miner-card:after{content:"";position:absolute;inset:0;border-radius:22px;background:linear-gradient(145deg,#201b0d,#121212 52%,#090909);z-index:-1}.info .info-row{display:flex;align-items:flex-start;gap:10px;margin:8px 0;color:#d6ccb0;font-size:13px;line-height:1.5}.info .info-icon{flex:0 0 18px;width:18px;text-align:center;color:#ffdf7a;font-size:13px;line-height:1.5}.info .info-text{flex:1;min-width:0}.info .info-text b{color:#ffdf7a}
+.miner-title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:17px}
+.miner-label{font-size:12px;font-weight:950;letter-spacing:1.8px;color:#ffdf80}.miner-sub{font-size:11px;color:#9f9478;margin-top:5px;line-height:1.45}.miner-count{min-width:48px;text-align:center;padding:9px 10px;border-radius:12px;background:#0b0b0b;border:1px solid #5d471c;color:#ffdf78;font-size:20px;font-weight:950}
+.miner-watch-btn{height:61px;margin:0 15px 15px;width:calc(100% - 30px);font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}.ad-progress{font-size:13px;padding-left:5px;opacity:.9}
+.hash-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:18px;border:1px solid #5b461b;border-radius:19px;background:linear-gradient(145deg,#1a160c,#0e0e0e);box-shadow:inset 0 1px #fff2,inset 0 0 30px #e1b4320a}
+.hash-label{font-size:10px;letter-spacing:1.7px;color:#b7a36d;font-weight:900}.hash-value{font-size:28px;font-weight:950;color:#ffe18a;margin-top:5px}.hash-unit{font-size:10px;color:#a89b7c;text-align:right;white-space:nowrap}
+.miner-timer{font-size:11px;color:#a89c7b;margin-top:4px}
+
+.live-payment-hero{border:1px solid #49391a;border-radius:23px;background:linear-gradient(145deg,#151515,#0b0b0b);padding:18px;margin-bottom:15px;box-shadow:inset 0 1px #ffffff08,0 12px 28px #0006}.live-status{display:flex;align-items:center;gap:10px;border:1px solid #244b31;background:linear-gradient(145deg,#0f2116,#0a110d);border-radius:15px;padding:13px 15px;color:#70dfa1;font-size:13px;font-weight:950;letter-spacing:.4px}.live-status-dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:#49e47b;box-shadow:0 0 8px #49e47b,0 0 18px #49e47b88;animation:liveblink 1.1s ease-in-out infinite}.live-payment-list{display:grid;gap:12px;margin-top:14px}.live-payment-item{border:1px solid #3b2d18;border-radius:17px;background:linear-gradient(145deg,#171717,#0d0d0d);padding:12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 1px #ffffff06}.live-payment-text{flex:1;min-width:0;color:#ff5656;font-size:14px;font-weight:950;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}.live-payment-channel{flex:0 0 auto;border:1px solid #6b501c;background:linear-gradient(115deg,#e3ad2e,#ffe98a,#c88d19);color:#1a1203;border-radius:11px;padding:10px 11px;font-size:10px;font-weight:950;letter-spacing:.5px;white-space:nowrap}.live-payment-empty{border:1px dashed #40351f;border-radius:16px;padding:24px 14px;text-align:center;color:#817b6b;font-size:13px}.live-admin-note{font-size:11px;color:#a79a78;line-height:1.55;margin:10px 2px 0}.live-admin-list{max-height:45vh;overflow:auto;margin-top:14px}.live-admin-item{border:1px solid #332a18;background:linear-gradient(145deg,#151515,#0e0e0e);border-radius:15px;padding:13px;margin:9px 0}.live-admin-item .live-payment-text{font-size:13px}.live-admin-time{font-size:10px;color:#8f866f;margin-top:7px}@keyframes liveblink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.72)}}
+
+/* Super Offer + Ticket pages — premium dark green / white lightning UI */
+.ticket-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:16px 0 18px;align-items:stretch}
+.ticket-action{min-height:102px;border:1px solid #1e8a55;border-radius:18px;background:linear-gradient(145deg,#092116,#0b120f 55%,#07100c);color:#f4fff9;box-shadow:0 12px 30px #0009,inset 0 1px #ffffff10;position:relative;overflow:hidden;padding:13px 8px;transition:.18s;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.ticket-action:before,.ticket-premium:before{content:"";position:absolute;inset:-70%;background:linear-gradient(110deg,transparent 42%,#69f5aa18 50%,transparent 58%);transform:translateX(-35%);animation:greenShine 6s linear infinite;pointer-events:none}
+.ticket-action:active{transform:scale(.97)}
+.ticket-action-icon{font-size:22px;line-height:1;margin-bottom:7px;position:relative;z-index:1}
+.ticket-action-title{font-size:10px;font-weight:950;letter-spacing:.7px;line-height:1.2;position:relative;z-index:1}
+.ticket-balance-action{border-color:#36c879;background:linear-gradient(145deg,#103b26,#0c2116 55%,#07120c)}
+.ticket-balance-number{font-size:19px;font-weight:950;color:#d9ffe9;margin-top:5px;position:relative;z-index:1}
+.ticket-page-head{display:flex;align-items:center;gap:11px;margin:2px 0 17px}
+.ticket-page-head .page-title{color:#eafff3}
+.ticket-back{border:1px solid #1d7549;background:#0c1712;color:#bfffd8;border-radius:12px;padding:10px 12px;font-weight:850}
+.ticket-premium{position:relative;overflow:hidden;border:1px solid #2ca966;border-radius:26px;padding:2px;background:#06100b;box-shadow:0 18px 55px #000b,0 0 35px #20c96c10}
+.ticket-premium-inner{position:relative;border-radius:24px;background:radial-gradient(ellipse at 85% 0%,#1b6a4030,transparent 46%),linear-gradient(145deg,#0d2418,#08130e 58%,#050b08);padding:20px}
+.ticket-offer-row{display:flex;align-items:center;gap:13px}
+.ticket-coin-mini{width:58px;height:58px;border-radius:16px;border:1px solid #35b970;background:linear-gradient(145deg,#123a25,#07140d);display:grid;place-items:center;box-shadow:0 0 22px #31dc7a18;flex:0 0 auto}
+.ticket-coin-mini img{width:43px;height:43px;object-fit:contain}
+.ticket-offer-amount{font-size:clamp(25px,7vw,35px);font-weight:1000;color:#f5fff9;letter-spacing:-1px;text-shadow:0 0 22px #62e99a20}
+.ticket-offer-label{font-size:10px;color:#83dca9;text-transform:uppercase;letter-spacing:1.8px;font-weight:900;margin-top:4px}
+.ticket-price-box{margin-top:18px;border:1px solid #256b47;border-radius:15px;padding:13px 14px;background:#07150e;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ticket-price-label{font-size:10px;color:#8fbba4;text-transform:uppercase;letter-spacing:1.3px;font-weight:900}
+.ticket-price-value{font-size:18px;font-weight:950;color:#d9ffe9}
+.ticket-notice{margin-top:14px;border:1px solid #285e43;background:linear-gradient(145deg,#0b1e14,#07110c);border-radius:15px;padding:13px;color:#c9f8db;font-size:12px;line-height:1.6}
+.ticket-notice b{color:#ffffff}
+.ticket-current{margin-top:13px;display:flex;justify-content:space-between;align-items:center;border:1px solid #193e2c;background:#06100b;border-radius:14px;padding:12px 14px}
+.ticket-current-label{font-size:10px;color:#7eaa92;text-transform:uppercase;letter-spacing:1.3px;font-weight:900}
+.ticket-current-value{font-size:20px;font-weight:950;color:#8effba}
+.ticket-green-btn{width:100%;margin-top:16px;border:1px solid #b8ffda;border-radius:15px;padding:15px;background:linear-gradient(115deg,#1e9c5c,#65f0a0 48%,#16854e);color:#03150b;font-weight:1000;letter-spacing:.7px;box-shadow:0 10px 32px #28d97722,inset 0 1px #ffffff99;position:relative;overflow:hidden}
+.ticket-green-btn:active{transform:scale(.985)}
+.ticket-history{margin-top:17px}
+.ticket-history-title{font-size:11px;color:#8fc7a7;text-transform:uppercase;letter-spacing:1.7px;font-weight:950;margin:0 0 9px}
+.ticket-history-item{border:1px solid #193e2c;background:linear-gradient(145deg,#0d1d15,#08100c);border-radius:15px;padding:13px;margin:9px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ticket-history-main{color:#dfffea;font-size:12px;font-weight:850}
+.ticket-history-meta{color:#7fa890;font-size:10px;margin-top:4px}
+.ticket-history-reward{color:#7dffb0;font-size:13px;font-weight:950;white-space:nowrap}
+.ticket-withdraw{margin-top:16px}
+.ticket-earn-card .ticket-offer-amount{font-size:31px}
+.ticket-earn-card .ticket-coin-mini{width:54px;height:54px}
+.ticket-ad-note{display:flex;gap:9px;align-items:flex-start;margin-top:16px}
+.ticket-ad-symbol{width:34px;height:34px;border-radius:11px;border:1px solid #2c8f5b;background:#0b2417;display:grid;place-items:center;color:#82ffb4;font-weight:950;flex:0 0 auto}
+.ticket-ad-note-text{font-size:12px;color:#bcebd0;line-height:1.6}
+.ticket-ad-note-text b{color:#fff}
+.ticket-earn-btn{margin-top:17px}
+.ticket-ad-countdown{font-size:38px;font-weight:1000;color:#eafff2;text-shadow:0 0 25px #49e98c33;margin:12px}
+@keyframes greenShine{0%,60%{transform:translateX(-45%) rotate(0)}90%,100%{transform:translateX(125%) rotate(8deg)}}
+@media(max-width:380px){
+  .ticket-actions{gap:6px}.ticket-action{min-height:96px;padding:10px 5px}.ticket-action-title{font-size:9px}
+  .ticket-balance-number{font-size:16px}.ticket-premium-inner{padding:17px}.ticket-offer-amount{font-size:25px}
 }
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:
-radial-gradient(circle at 50% -10%,#1b5a3b 0,transparent 38%),
-radial-gradient(circle at 0 40%,#0c3020 0,transparent 32%),var(--bg);
-color:var(--white);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:18px}
-button{font:inherit}
-.app{width:min(100%,460px);margin:0 auto;padding-bottom:30px}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.08em;font-size:13px}
-.logo{width:40px;height:40px;border-radius:14px;background:linear-gradient(145deg,#7affc0,#16b978);display:grid;place-items:center;color:#042216;font-size:20px;box-shadow:0 10px 30px #16bd7350}
-.status{border:1px solid var(--line);border-radius:30px;padding:7px 10px;color:#a9c0b2;font-size:10px;letter-spacing:.08em}
-.status:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px}
-.profile{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:#0c2118;color:white;cursor:pointer;font-size:20px;display:grid;place-items:center}
-h1{font-size:27px;letter-spacing:-.05em;margin:0 0 7px}
-.sub{color:var(--muted);font-size:13px;margin:0 0 20px;line-height:1.55}
-.page{display:none;animation:pageIn .22s ease}
-.page.active{display:block}
-.card{position:relative;overflow:hidden;background:linear-gradient(145deg,#123322,#0a1b13 72%);border:1px solid var(--line);border-radius:27px;padding:22px;box-shadow:0 25px 70px #0008}
-.card:before{content:"";position:absolute;width:190px;height:190px;right:-80px;top:-95px;border-radius:50%;background:#55f0a617;filter:blur(2px);pointer-events:none}
-.coin-card{padding:25px 22px 19px}
-.label{font-size:11px;letter-spacing:.16em;color:#9ab5a6;font-weight:800}
-.coin-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.coin-icon{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#73ffc0,#20c77f);display:grid;place-items:center;font-size:23px;color:#052719;box-shadow:0 8px 24px #18c57a35}
-.coin-balance{font-size:46px;line-height:1;font-weight:900;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
-.coin-caption{color:#8da899;font-size:12px;margin:9px 0 0 58px}
-.withdraw{margin-top:18px;width:100%;border:1px solid #55f0a633;border-radius:14px;background:#0a2117;color:#c9f9df;padding:12px;font-weight:800;cursor:pointer}
-.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.action-box{min-height:116px;border:1px solid var(--line);border-radius:21px;background:linear-gradient(145deg,#102d20,#0b1f16);padding:18px 15px;text-align:left;color:white;cursor:pointer;box-shadow:0 16px 40px #0005;transition:.15s}
-.action-box:active{transform:scale(.98)}
-.action-box .mini-icon{font-size:23px;margin-bottom:13px}
-.action-box b{display:block;font-size:14px}
-.action-box span{display:block;color:#87a797;font-size:11px;margin-top:5px;line-height:1.4}
-.ticket-box{margin-top:14px;text-align:center;padding:17px;border:1px solid #55f0a62a;border-radius:20px;background:linear-gradient(145deg,#143b28,#0b2117)}
-.ticket-value{font-size:30px;font-weight:900;margin-top:5px}
-.ticket-value small{font-size:12px;color:#8eaa9a;letter-spacing:.1em}
-.history-card{margin-top:14px}
-.section-title{font-size:13px;font-weight:850;letter-spacing:.04em}
-.history{margin-top:12px;display:grid;gap:8px;max-height:260px;overflow:auto}
-.history-item{display:flex;justify-content:space-between;gap:10px;padding:12px;border-radius:14px;background:#0a1d14;border:1px solid #ffffff08}
-.history-item b{font-size:12px}.history-item span{font-size:10px;color:#80988a}
-.back{border:0;background:transparent;color:#8eb9a3;padding:4px 0;margin-bottom:13px;cursor:pointer;font-weight:800}
-.offer-card{text-align:center;padding:24px 20px}
-.offer-top{display:flex;align-items:center;justify-content:center;gap:10px}
-.offer-amount{font-size:31px;font-weight:950;letter-spacing:-.04em}
-.offer-note{margin:18px 0;padding:14px;border-radius:15px;background:#0a1d14;border:1px solid #ffffff09;color:#c7e4d4;font-size:12px;line-height:1.55}
-.price-box{display:inline-flex;align-items:center;gap:7px;border:1px solid #55f0a638;background:#0a2117;border-radius:13px;padding:11px 14px;font-weight:850;color:#bdf7d8}
-.big-action{width:100%;border:0;border-radius:17px;padding:17px;background:linear-gradient(135deg,#68f8b3,#16bd73);color:#032216;font-weight:950;cursor:pointer;box-shadow:0 14px 35px #16bd7340}
-.big-action:disabled{background:#1b3328;color:#789486;box-shadow:none;cursor:not-allowed}
-.ticket-balance{margin:15px 0 18px;color:#9bb7a7;font-size:12px}
-.ticket-balance b{color:white;font-size:20px}
-.ad-card .ad-reward{display:flex;align-items:center;justify-content:center;gap:10px}
-.ad-symbol{width:54px;height:54px;border-radius:17px;background:#123a28;display:grid;place-items:center;color:var(--green);font-size:25px}
-.ad-reward strong{font-size:32px}
-.notice{margin-top:15px;padding:13px;border-radius:14px;background:#0a1d14;border:1px solid #ffffff09;color:#b8d4c4;font-size:11px;line-height:1.55}
-.ad-btn{margin-top:18px}
-.daily{font-size:11px;color:#7f9a8b;text-align:center;margin-top:11px}
-.modal-backdrop{position:fixed;inset:0;background:#020a06dd;backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
-.modal-backdrop.show{display:flex}
-.modal{width:min(100%,380px);background:linear-gradient(145deg,#123322,#091a12);border:1px solid var(--line);border-radius:25px;padding:25px;text-align:center;box-shadow:0 30px 90px #000b;animation:pop .22s ease}
-.modal-icon{width:58px;height:58px;border-radius:18px;margin:0 auto 14px;background:#16402b;display:grid;place-items:center;color:var(--green);font-size:24px}
-.modal h2{font-size:19px;margin:0 0 8px}.modal p{font-size:12px;color:#9bb4a5;line-height:1.6;margin:0 0 18px}
-.field{width:100%;padding:13px;border-radius:13px;border:1px solid #ffffff12;background:#07130e;color:white;outline:none;margin-bottom:10px}
-.modal button{width:100%;padding:13px;border-radius:13px;border:1px solid #ffffff14;background:#1a3327;color:white;font-weight:800;cursor:pointer}
-.modal button.primary{background:var(--green);color:#052417;border:0}
-.modal button+button{margin-top:9px}
-.error{color:#ff9eaa!important}.small{font-size:10px!important}
-.admin-list{max-height:370px;overflow:auto;text-align:left;margin-top:12px}
-.user-row{padding:13px 0;border-bottom:1px solid var(--line)}
-.user-name{font-weight:850;font-size:13px}.user-detail{font-size:11px;color:#8fa99b;margin-top:5px;line-height:1.55}
-.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#123322;border:1px solid #55f0a62a;border-radius:15px;padding:12px 16px;color:#eafff2;font-size:12px;box-shadow:0 15px 40px #0008;transition:.25s;z-index:40;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
-@keyframes pop{from{transform:translateY(8px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
-@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@media(max-width:380px){.coin-balance{font-size:39px}}
-</style>
-</head>
-<body>
-<main class="app">
-<header class="top">
-  <div class="brand"><div class="logo">🐶</div> BABYDOGE REWARDS</div>
-  <div style="display:flex;gap:8px;align-items:center"><div class="status" id="status">CONNECTING</div><button class="profile" id="profileBtn">♙</button></div>
-</header>
+</style></head>
+<body><div id="app"><div class="topbar"><div class="brand">BABYDOGE REWARDS</div><button class="profile-btn" onclick="openProfile()" aria-label="Profile">☰</button></div>
+<section id="home" class="screen active">
+<div class="balance-card">
+<div class="web-coin" aria-hidden="true"><svg viewBox="0 0 116 150" fill="none">
+<g stroke="#f7f7f7" stroke-width=".72" stroke-linecap="round" opacity=".88">
+<path d="M58 0L7 39M58 0L109 39M58 0V78M58 0L20 70M58 0L96 70M7 39L20 70L58 78L96 70L109 39M7 39L58 48L109 39M20 70L58 48L96 70M20 70L58 92L96 70M7 39L58 78L109 39M58 0L58 48"/>
+<path d="M7 39Q25 14 58 10Q91 14 109 39M13 48Q30 24 58 22Q86 24 103 48M20 57Q34 35 58 34Q82 35 96 57M26 65Q39 47 58 46Q77 47 90 65M33 72Q44 59 58 58Q72 59 83 72" opacity=".72"/>
+</g><path d="M58 0V102" stroke="#fff" stroke-width="1.15" opacity=".95"/></svg><img class="coin-img" src="" alt="BabyDoge coin"></div>
+<div class="coin-row"><div class="coin"><img class="coin-img" src="" alt="BabyDoge coin"></div><div><div class="balance-label">Your total balance</div><div id="balance" class="balance">0</div><div class="currency">BABYDOGE COINS</div></div></div>
+</div>
 
-<section id="homePage" class="page active">
-  <h1>BabyDoge Rewards</h1>
-  <p class="sub">Earn tickets from ads, unlock Super Offers and grow your BabyDoge balance.</p>
+<div class="ticket-actions">
+<button class="ticket-action" onclick="showScreen('superOffer')"><span class="ticket-action-icon">⚡</span><span class="ticket-action-title">UNLOCK SUPER OFFER</span></button>
+<div class="ticket-action ticket-balance-action"><span class="ticket-action-icon">🎟</span><span class="ticket-action-title">TOTAL TICKET BALANCE</span><span id="homeTicketBalance" class="ticket-balance-number">0</span></div>
+<button class="ticket-action" onclick="showScreen('earnTicket')"><span class="ticket-action-icon">＋</span><span class="ticket-action-title">EARN TICKET</span></button>
+</div>
 
-  <div class="card coin-card">
-    <div class="label">TOTAL BABYDOGE COIN</div>
-    <div class="coin-row"><div class="coin-icon">🐶</div><div class="coin-balance" id="coinBalance">0</div></div>
-    <div class="coin-caption">Available BabyDoge balance</div>
-    <button class="withdraw" id="withdrawBtn">↗ Withdraw</button>
-  </div>
-
-  <div class="action-grid">
-    <button class="action-box" id="offerOpen"><div class="mini-icon">⚡</div><b>Unlock Super Offer</b><span>Use tickets to unlock a coin reward.</span></button>
-    <button class="action-box" id="ticketOpen"><div class="mini-icon">🎟</div><b>Earn Ticket</b><span>Watch ads for 1 ticket each.</span></button>
-  </div>
-
-  <div class="ticket-box">
-    <div class="label">TOTAL TICKET BALANCE</div>
-    <div class="ticket-value"><span id="ticketBalance">0</span> <small>TICKETS</small></div>
-  </div>
-
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyHome"><div style="color:#718d7d;font-size:11px">No Super Offer completed yet.</div></div>
-  </div>
+<div class="miner-card">
+<div class="miner-title-row"><div><div class="miner-label">ACTIVE MINER</div><div class="miner-sub">Earn coins automatically while your miner is active.</div></div><div class="miner-count" id="activeMinerCount">0</div></div>
+<button class="watch-btn miner-watch-btn" id="watchBtn" onclick="watchAds()"><span class="play">▶</span> WATCH ADS & GET MINER <span class="ad-progress" id="adProgress">0/10</span></button>
+</div>
+<div class="hash-card"><div><div class="hash-label">TOTAL HASH RATE</div><div class="hash-value" id="hashRate">0</div></div><div class="hash-unit">COINS / SECOND</div></div>
+<div class="info"><div class="mini-title">Miner System</div>
+<div class="info-row"><span class="info-icon">✦</span><span class="info-text">Watch <b>10 valid ads</b> to activate <b>1 miner</b>.</span></div>
+<div class="info-row"><span class="info-icon">◷</span><span class="info-text">Each miner stays active for <b>30 minutes</b>.</span></div>
+<div class="info-row"><span class="info-icon">⚡</span><span class="info-text">Each active miner adds <b>1,500 coins / second</b> to your total balance.</span></div>
+<div class="info-row"><span class="info-icon">∞</span><span class="info-text">You can activate <b>unlimited miners</b>.</span></div>
+</div>
+<div style="margin-top:18px"><button class="secondary" style="width:100%;padding:14px" onclick="showScreen('withdraw')">⇧ &nbsp; WITHDRAW BABYDOGE</button></div>
+<div class="info" style="margin-top:14px"><div class="mini-title">Quick Access</div>
+<div class="info-row"><span class="info-icon">✦</span><span class="info-text">Visit the <b>Tasks</b> page to complete missions.</span></div>
+<div class="info-row"><span class="info-icon">♧</span><span class="info-text">Open <b>Refer</b> to invite friends and track referrals.</span></div>
+<button class="submit-btn" style="width:100%;margin-top:10px" onclick="showScreen('livePayments')">● &nbsp; LIVE PAYMENT</button>
+</div>
 </section>
 
-<section id="offerPage" class="page">
-  <button class="back" data-back>← Back to Home</button>
-  <h1>Super Offer</h1>
-  <p class="sub">Unlock the offer with tickets and claim your BabyDoge coins.</p>
-  <div class="card offer-card">
-    <div class="offer-top"><div class="coin-icon">🐶</div><div class="offer-amount">+7,500,000</div></div>
-    <div class="price-box">🎟 Price = 30 Tickets</div>
-    <div class="ticket-balance">Your ticket balance: <b id="offerTickets">0</b></div>
-    <div class="offer-note"><b>Unlock Super Offer</b><br>Unlock this offer and get <b>7,500,000 BabyDoge coin</b>.</div>
-    <button class="big-action" id="unlockOfferBtn">Unlock Super Offer</button>
-  </div>
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyOffer"></div>
-  </div>
+<section id="superOffer" class="screen">
+<div class="ticket-page-head"><button class="ticket-back" onclick="showScreen('home')">← Back</button><div><h1 class="page-title">Super Offer</h1><div class="page-subtitle">Use tickets to unlock a premium BabyDoge reward.</div></div></div>
+<div class="ticket-premium">
+<div class="ticket-premium-inner">
+<div class="ticket-offer-row"><div class="ticket-coin-mini"><img class="coin-img" src="" alt="BabyDoge coin"></div><div><div class="ticket-offer-amount">+7,500,000</div><div class="ticket-offer-label">BABYDOGE COINS</div></div></div>
+<div class="ticket-price-box"><span class="ticket-price-label">Unlock price</span><span class="ticket-price-value">30 🎟 Tickets</span></div>
+<div class="ticket-notice">⚡ <b>Unlock super offer and get 7,500,000 BabyDoge coins.</b><br>30 tickets will be deducted from your total ticket balance when you unlock this offer.</div>
+<div class="ticket-current"><span class="ticket-current-label">Your ticket balance</span><span id="superTicketBalance" class="ticket-current-value">0</span></div>
+<button id="superOfferBtn" class="ticket-green-btn" onclick="unlockSuperOffer()">UNLOCK SUPER OFFER</button>
+</div>
+</div>
+<div id="superOfferHistory" class="ticket-history"></div>
+<div class="ticket-withdraw"><button class="secondary" style="width:100%;padding:14px" onclick="showScreen('withdraw')">⇧ &nbsp; WITHDRAW BABYDOGE</button></div>
 </section>
 
-<section id="ticketPage" class="page">
-  <button class="back" data-back>← Back to Home</button>
-  <h1>Earn Ticket</h1>
-  <p class="sub">Watch the ad for at least 8 seconds and receive 1 ticket.</p>
-  <div class="card offer-card ad-card">
-    <div class="ad-reward"><div class="ad-symbol">🎟</div><strong>+1</strong></div>
-    <div class="notice"><b>Watch Ads minimum 8 seconds</b><br>1 Ads = 1 Ticket</div>
-    <button class="big-action ad-btn" id="watchTicketBtn">▶ Watch Ads Get 1 Ticket</button>
-    <div class="daily">Daily: <span id="dailyCount">0</span>/100 ads</div>
-    <div class="ticket-balance">Total ticket balance: <b id="ticketPageBalance">0</b></div>
-  </div>
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyTicket"></div>
-  </div>
+<section id="earnTicket" class="screen">
+<div class="ticket-page-head"><button class="ticket-back" onclick="showScreen('home')">← Back</button><div><h1 class="page-title">Earn Ticket</h1><div class="page-subtitle">Watch an ad for at least 8 seconds and earn 1 ticket.</div></div></div>
+<div class="ticket-premium ticket-earn-card">
+<div class="ticket-premium-inner">
+<div class="ticket-offer-row"><div class="ticket-coin-mini">🎟</div><div><div class="ticket-offer-amount">+1</div><div class="ticket-offer-label">TICKET REWARD</div></div></div>
+<div class="ticket-notice">▶ <b>Watch ads minimum 8 seconds</b><br>1 ad = 1 Ticket. If you return before 8 seconds, the ticket will not be added.</div>
+<div class="ticket-current"><span class="ticket-current-label">Your ticket balance</span><span id="earnTicketBalance" class="ticket-current-value">0</span></div>
+<button id="ticketWatchBtn" class="ticket-green-btn ticket-earn-btn" onclick="watchTicketAd()">▶ &nbsp; WATCH ADS GET 1 TICKET</button>
+</div>
+</div>
 </section>
-</main>
-
-<!-- Account -->
-<div class="modal-backdrop" id="accountModal"><div class="modal">
-  <div class="modal-icon">🐶</div><h2 id="accountTitle">Enter Your Name</h2>
-  <p id="accountText">Create your account. Your rewards are stored on the server.</p>
-  <input class="field" id="nameInput" maxlength="40" placeholder="Enter your name">
-  <button class="primary" id="accountAction">Save</button><p class="small error" id="accountError"></p>
-</div></div>
-
-<div class="modal-backdrop" id="checkingModal"><div class="modal">
-  <div class="modal-icon">◌</div><h2>Checking Account</h2><p>Please wait while we securely check your backend account.</p>
-</div></div>
-
-<!-- Profile -->
-<div class="modal-backdrop" id="profileModal"><div class="modal">
-  <div class="modal-icon">♙</div><h2>Profile</h2><p id="profileInfo">Not connected</p>
-  <button class="primary" id="adminOpen">Admin Panel</button><button id="logoutBtn">Change Account</button><button id="profileClose">Close</button>
-</div></div>
-
-<!-- Admin -->
-<div class="modal-backdrop" id="adminLoginModal"><div class="modal">
-  <div class="modal-icon">🔐</div><h2>Admin Access</h2><p>Enter the admin password.</p>
-  <input class="field" id="adminPassword" type="password" placeholder="Admin password">
-  <button class="primary" id="adminLogin">Continue</button><button id="adminLoginClose">Cancel</button>
-  <p class="small error" id="adminError"></p>
-</div></div>
-
-<div class="modal-backdrop" id="adminModal"><div class="modal" style="max-width:420px">
-  <div style="display:flex;align-items:center;justify-content:space-between"><h2 style="margin:0">Admin Panel 4</h2><button id="adminRefresh" style="width:auto;padding:8px 11px">↻</button></div>
-  <p id="adminSummary" style="text-align:left;margin-top:8px">Loading...</p>
-  <div class="admin-list" id="adminList"></div><button id="adminClose">Close</button>
-</div></div>
-
-<!-- Result -->
-<div class="modal-backdrop" id="resultModal"><div class="modal">
-  <div class="modal-icon" id="resultIcon">✓</div><h2 id="resultTitle">Done</h2><p id="resultText"></p><button class="primary" id="resultClose">Continue</button>
-</div></div>
-<div class="toast" id="toast"></div>
-
+<section id="refer" class="screen"><div class="page-intro"><h1 class="page-title">Refer & Earn</h1><div class="page-subtitle">Invite friends and grow your rewards together.</div></div><div class="refer-hero"><div class="hero-symbol">♧</div><div class="hero-big">10,000,000 Coins</div><div class="hero-small">Reward for every valid referral. Share your invite link with friends to get started.</div></div><div class="refer-stats"><div class="stat-card"><div class="stat-label">Successful referrals</div><div class="stat-value" id="refCount">0</div></div><div class="stat-card"><div class="stat-label">Reward per referral</div><div class="stat-value" style="font-size:17px">10M</div></div></div><div class="ref-card"><div class="mini-title">Your referral link</div><div class="ref-link-box" id="refLink">Loading referral link...</div><button class="submit-btn" onclick="copyReferral()">COPY INVITE LINK</button></div><div class="info"><div class="mini-title">How referrals work</div><p>✦ &nbsp; Share your personal referral link</p><p>✦ &nbsp; Your friend opens the app using your link</p><p>✦ &nbsp; Valid referral rewards are credited through the referral system</p></div></section><section id="tasks" class="screen"><div class="page-intro"><h1 class="page-title">Tasks</h1><div class="page-subtitle">Complete available missions and collect extra BabyDoge coins.</div></div><div class="tasks-hero"><div class="hero-symbol">✦</div><div class="hero-big">Earn Extra Rewards</div><div class="hero-small">Join the listed channels or activities, return to the app and claim your reward.</div></div><div class="section-head">Available tasks</div><div id="taskList" class="task-list"><div class="empty">Loading tasks...</div></div></section>
+<section id="livePayments" class="screen"><button class="back-btn" onclick="showScreen('home')">← Back</button><div class="section-head">Live Payment</div><div class="live-payment-hero"><div class="live-status"><span class="live-status-dot"></span><span>Live Payment</span></div><div class="page-subtitle" style="margin-top:12px">Latest payment updates are shown below in real time.</div></div><div id="livePaymentList" class="live-payment-list"><div class="live-payment-empty">Loading live payments...</div></div></section>
+<section id="withdraw" class="screen"><button class="back-btn" onclick="showScreen('home')">← Back</button><div class="section-head">Withdraw</div><div class="withdraw-card"><div class="withdraw-inner"><div class="fieldbox"><label>Enter your Binance ID</label><input id="binanceId" placeholder="Your Binance ID" autocomplete="off"></div><div class="fieldbox"><label>Enter amount (BabyDoge)</label><input id="withdrawAmount" type="number" inputmode="numeric" placeholder="Coin amount"></div><button class="submit-btn" id="submitWithdraw" onclick="submitWithdraw()">SUBMIT REQUEST</button><div class="hint">Minimum withdrawal: <b style="color:#ffdf76">2,500,000 BabyDoge</b>. Requests are reviewed by our team. Please check your Binance ID carefully.</div></div></div><div class="request-list"><div class="mini-title">Your withdrawal requests</div><div id="myRequests"></div></div></section>
+<section id="admin2" class="screen"><button class="back-btn" onclick="showScreen('home')">← Home</button><div class="section-head">Admin Panel 2</div><div class="page-content"><div class="mini-title">Task management</div><div class="fieldbox"><label>Task name</label><input id="taskName" type="text" maxlength="100" placeholder="Enter task name"></div><div class="fieldbox"><label>Task link</label><input id="taskLink" type="url" placeholder="https://t.me/your_channel"></div><div class="fieldbox"><label>Reward amount</label><input id="taskAmount" type="number" inputmode="numeric" placeholder="3,000,000"></div><button class="submit-btn" onclick="addTask()">ADD TASK</button><div class="gold-line"></div><div class="mini-title">Current tasks</div><div id="adminTasks" class="admin-list"></div></div></section>
+<section id="contact" class="screen"><button class="back-btn" onclick="showScreen('home')">← Back</button><div class="section-head">Contact Us</div><div class="page-content"><h3 style="color:#ffdf80;margin-top:0">Need help?</h3><p>If you see any glitch or problem in the app, please contact our team. Describe the issue and include screenshots if helpful.</p><div class="gold-line"></div><div class="mini-title">Contact email</div><a href="mailto:viranibhavy8@gmail.com">viranibhavy8@gmail.com</a></div></section>
+<section id="admin" class="screen"><button class="back-btn" onclick="showScreen('home')">← Home</button><div class="section-head">Admin Panel</div><div class="page-content"><div class="mini-title">Withdrawal management</div><div id="adminRequests" class="admin-list"></div></div></section><section id="admin3" class="screen"><button class="back-btn" onclick="showScreen('home')">← Home</button><div class="section-head">Admin Panel 3</div><div class="page-content"><div class="mini-title">Ban account by Binance ID</div><div class="fieldbox"><label>Binance ID to ban</label><input id="banBinanceId" placeholder="Enter Binance ID" autocomplete="off"></div><div class="fieldbox"><label>Ban reason</label><textarea id="banReason" placeholder="Enter reason for banning" style="width:100%;min-height:100px;background:transparent;border:0;outline:0;color:#fff;font:inherit;resize:vertical"></textarea></div><button class="submit-btn" onclick="banBinanceAccount()">BAN ACCOUNT</button><div class="gold-line"></div><div class="mini-title">Unban account by Binance ID</div><div class="fieldbox"><label>Binance ID to unban</label><input id="unbanBinanceId" placeholder="Enter Binance ID" autocomplete="off"></div><button class="secondary" style="width:100%" onclick="unbanBinanceAccount()">UNBAN ACCOUNT</button></div></section><section id="admin4" class="screen"><button class="back-btn" onclick="showScreen('home')">← Home</button><div class="section-head">Admin Panel 4</div><div class="page-content"><div class="mini-title">All User Accounts</div><p class="hint">Each user shows only the requested stats: ads watched, super offers completed, and referrals.</p><div class="fieldbox"><label>Search users</label><input id="admin4Search" placeholder="User ID or Binance ID" oninput="filterAdmin4Users()" autocomplete="off"></div><div id="admin4Users" class="admin4-users"><div class="empty">Loading accounts…</div></div><button class="secondary" style="width:100%;margin-top:12px" onclick="loadAdmin4Users()">↻ REFRESH USERS</button></div></section><section id="admin5" class="screen"><button class="back-btn" onclick="showScreen('home')">← Home</button><div class="section-head">Admin Panel 5</div><div class="page-content"><div class="mini-title">Live Payment Management</div><div class="fieldbox"><label>Payment text</label><textarea id="livePaymentText" maxlength="500" placeholder="Example: -678906 BabyDoge Paid" style="width:100%;min-height:110px;background:transparent;border:0;outline:0;color:#fff;font:inherit;resize:vertical"></textarea></div><button class="submit-btn" onclick="addLivePayment()">SUBMIT PAYMENT</button><div class="live-admin-note">After submitting, the new payment will immediately appear on the Live Payment page.</div><div class="gold-line"></div><div class="mini-title">Recent Live Payments</div><div id="adminLivePayments" class="live-admin-list"><div class="empty">Loading payments...</div></div><button class="secondary" style="width:100%;margin-top:12px" onclick="loadAdminLivePayments()">↻ REFRESH PAYMENTS</button></div></section></div>
+<div class="bottom-nav"><div class="nav-inner"><button class="nav-item active" data-screen="home" onclick="showScreen('home')"><span class="nav-icon">⌂</span><span>HOME</span></button><button class="nav-item" data-screen="refer" onclick="showScreen('refer')"><span class="nav-icon">♧</span><span>REFER</span></button><button class="nav-item" data-screen="tasks" onclick="showScreen('tasks')"><span class="nav-icon">✦</span><span>TASKS</span></button></div></div><div id="modalBack" class="modal-back"><div class="modal" id="modal"></div></div><div id="toast" class="toast"></div>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-(() => {
-"use strict";
-const API="https://helipedo.onrender.com";
-const ADS_URL="https://auctionr.org/4/ae64da386ee63dd06a886a75a74a1631";
-const MIN_WATCH_MS=8000, COOLDOWN_MS=30000, DAILY_LIMIT=100, BREAK_EVERY=10, BREAK_MS=300000;
-const OFFER_COST=30, OFFER_REWARD=7500000;
-const $=id=>document.getElementById(id);
-const storage={get:k=>{try{return localStorage.getItem(k)||""}catch{return""}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},remove:k=>{try{localStorage.removeItem(k)}catch{}}};
-let account=null, pendingAd=null, adBusy=false, accountBusy=false, adminToken="", adminBusy=false, toastTimer, cooldownUntil=0, breakUntil=0, ticker=null, offerUnlocked=false;
+const COIN_SRC='data:image/webp;base64,UklGRtQOAABXRUJQVlA4IMgOAAAQNgCdASqAAIAAPuFYoE6opSMiOfp9+RAcCWwAx+I6Wd6cZqfXfoj9bvcxtrbvpA25XmA85D0tf370XOpV9CXpav77YQuL7pF+ZyVTj/r4ne/qe+X486gTuPZe9gL3C+xeABqTeHNan9I9gL+hebroJesfYR/YXrp+ki16/gN53pLMwVc/2kS5HcDTyfUdpLuJXy41hJIDhw6tS15EnYvXijjlZxNjQSQM/D4USSBeMPjzbq2sbzvDkVOBBeVNlAF7T+DbuveRrfvQzW2A8ob9k7loiSpMLRmP9sLX9Oo3mRejF7ZvJ5/RWX8wefdX0+ZJ8G2Jek46AlCszzqwcBAbfWhFN9425XMBRJE0Bs5eHGIh9lWj70WzDlJCHOArKY2VUS/n+zVYgdrjxtZp8A1pVd2HE7IeCxFGgUA03r0xhbsjBSppP8xquAkZaxK3qojCgJbwFVpVSWG5YDhPbUN52JNLQCCCeMbJg/GXNDv0uufaj1KgnM0ECXIS31TEsSxBcP/ChDre+3oWkE/yI6vk59akzjO7plHajc3kJy3YbM13omF5G0WRWHOzkswSUsM+e9FbCxrFMAAA/v2ZgAXRTrkmq2Q1/NGkIJTYQY+JOnkiQt8qcmcMd2DOEMI1Db+0yE0/eXng4r3Te4o6fzUxVE7gfAZhoKguBkuCro/nuc65p/pu5mB4287M7Gksg2fsMjTpZFTaeiY2Kn8ZI0Vr1N9f6h0kaaSGd2owsq5sCHpzQmWt8vysFLCP2IsfzdcnjsTPfpu/s4TOL/E6GXWF0mgYVpN2eJ6+SbXkYMNNYz2komQyNuiVH+J/HzEZe0Wedm4ykpOk2HY7fU+nJaJedlhaoWGPbFKXdM2EjepE4RTB9vv30F3Xy8+tLBAx3qv+JpqKX+5FiInwTDRVfxMB2xSWz8FgbKAQEdMoUlAc9EbZ5TALjR+zZmvzMCOmqQMBfmTJrz6OmKNI5mPv48zSL/87NBsFm8H7eojwj1Usdn8dfRITKhP6t7SlucpTn2jWTEbjrlBDUcZSi0R6ZJlkKThg9tf+WSU2JVLFHLOhQhCuC71GDhHRzCObp4jkCHl4G5+XVkL/k+5lrWM+efUMygPMAdX/cGysKC9wt8vnv+cm4Td3NhQRMOrBlCu1Pgpk6lojyhcwarf+JBRIS4M/urYm3HMj7xr+n5uvx8oIjyvYr+viNC7n8adMkf+cJQddgNSNTZt8VpHU3PORdgcyq5vJvVcAuikicvYWNSSKnzUbZb+fU2eg1ybZp4Aiho4GhUq41cRFZJjAxn1vGQUx4PaBkqSrNzOf77BMFXI+WvPT+hG5VYcYT+LFIff4OHa4vP4NSuecWLuLyUqGkQKRzO9kNly/fLo34Upil9ys+/nSQ2EP4XtGgLQijPZpQjmQCItdxwB4Pyr4JJxiHg7CQ7YzkQhfCmwshlUsd8/tZ2ngPBkkpfFuWwWO8dHSgpGW6IfYkNTIkK0VvM37R21Rb2kd5loMateegKwvc74trGpVNPldYFPLYsSKjDOwGt6+bWD59nkb+V8k2uRYMH1+9s9j6RDiwrRxuh7M2vxWivs+kw99FIRUbmN8XfPsITIfdff/HYX/tqvDvJicXW9/klIv5kxXwIqloJGQIx+Ftk5Xwsnw4H8Q6YWzyJqQcMZnet14F6BKa5IqTMRne+VESA6sa/kDsiHOfmZ98TMgVuS/LdQrX8ukZ8hTeN0pwIu+naFonx8ab+yM9xz/22cqvMpunQSe4ii30hM5ZjVHYdTVjwFwXjgzdNIdF7hQmCCPuSO2pHg8aHXvzFkC/oZIAfoGAThzaubhQjwvlrYCrfaxl8QoN1QfekpDpeUoQ0n2Si4AG0ekDL3U+HkH91wGeNP9xcAflx+jJd1waVXpCpp+vm7Lma4NLfVjdZ6fZ/oT5xoJub5Zf3GHS8Xs947ZJo5JF4Z8ImULjCx4Lr8k+O8s7jW8fzK97Rbo+GUsxY0ppZeOnhiMa1VbnVmiLsObjAwzqA2Qf1I3EpwezOSv9+AhbYVSVx9FeCssYGm1igyU7CkFLZwjdoVj4XgvHICoqQE/JyiOeWxeNoWpITe78B5k0BWP+oJCvMn/ljbVJ/H19YWDbzkCJIv/c574GZ+9ucHRG5/EWOZeUf6gmCNwB6dgDdwL10Kyo67Hav2VAduYRxycVLxLei9w5RWxTn4ydIG+nOWhY5N4VO6lAJw5qZQYM2m5W9B8rZwektWyGSoJILrnhjG0ItOVihcPmndzU+H3z2AOSP8F8qn9wDYR1gNYUJ92LvRFXkjOo/7NtIT6+hddXcigvZcHeqn/0vFOS/Hz+ajTjHaQHp/h9qsidMSh5qpCGkMhKQJjzRezJCEpg3Kma3qJ4Ywkazf3O+D//SQelpnST9a1JwlvnYg2hT5VQhHlOIl/XMmof4R/yYkXBwYIXc8E9rTtE6pjCkjUkPc5E1E1Op2zidvrBSFbc/iwTZGTYauUHVDls4NCkkcmRWE3UqdcRIvcmrhvi5vkA462T2/fqLBLLWSuNDUgvZuZqpuEeAUSS5nW5lqpppZByZCp6wT2bOH2BUdCitVP0EZiUL+p52FlHLd/Wh4FmhCzqGD8Xb6WkuPZkSluCCm0gf2m9g1hLIETuFVvze1mOHuXstFV+pelaKYfME7IBO6sXcdRvJf0Bz7iNdRTIB8r/wZlsnZEy+vOjki29ATaedVnUWU3NVOFT4kBflgnkoPRqRBYStQn7binOgSX7eU5kBTksKP8pUKfQP8kyikTcuCUbOJhd1femUAV0ubjKPsvgZL79MCnS8Fuo7gBoO8lR3aWUdiJqa0JQPmB8Tn/4t/0lAK1Bg1p6KdlsxM6k9ARhLv8ReYlFY0vxRqjrAmNg1RCN3YL+Dpc7cEaVYzQ7GNgfnP+7nUMLsdBX34hzgtGJjIWHurnQ9RxWybYJQ5r1m8kf4FRSXuLHcjcErQB9q3KGipxsKwiaK+6cqU9/CZ67xO3A3Mk6yauo4h9ZxJ+lpXCNgRO1d0nbCZmv6mhbay3YVbZ+rio1cIpIuKdQWez8MXfmaXPJXOhunyXs1+4ui6fHKEh7IOHq2nsfZawxOkKK2+E5fn2CT2zTXh3rXlYMzLEKuX7vIycJOTtLYLvl2Eig52usnWBELKGDflnwl83F8ib9gjbKSRNdsaMKJDINgf6KqR0X4TG7xuBJTTE6zkvJckw9I6tKsq5NCrAbIo/d67Gje5wK+PTWQjHguDROv++knk/ywNkIhWkZ0TwRRe3lqAefzWct7Vm1imyAQyk1lrvqTHa1bqI8mjvrZJhAAjrWgy75FdQjNRLlf7SVSgDIBHCba1P7JDAAVcs6ei4vjKmouLevpsLfg8mGJsQpLnrdJaOEdVDx0VBCUm92txb0wmK6xx6rMqByDE6dMAl/UQhqSIviuaBZpQaVrgLl7YkHdc7QZu/iTv9BaMJ6ZVE4MgvS/DO+yETpiAciQ76ikkhdY5GC4mPp44NOFRZwn2/yPEoLLnc0fq/mkdVK41sjpeiac3LzCQhSPJ5bMxWzGOMVbEcsPTooEt2jJ4MLvOfiFOc8U4k3CvNM/sAX2l3J44I1wlBgInToeprmdGlU1Q8po/Y7d+5JlNZDpgpgqnSrejGzUeLkckltyEBM+QDrKSZv/L8nixF4QZ40Q1CqfqD7fnnARxur+QB2K2k51wWwgLqMH+x1bDM7umVH+JTvAY0zgA2yu/G2l0UJ8hpTUOurWcHqTiO+Mq0Lpxge6G9NuwVtpBP0iIo0YJrKSSzSUuH8f8oacamxRt4KC5y0yL8ZpFZfmBGAOLebMYKc6WyXLiTt71QroREVRc0gyY4woFUvG/AG/UtqL0Yv6wLLcefBlNr9JT0gINhmCbo2gdnDdvQh7Cc/n9nYLb38oS2AfGtmZ68rcy0jD4RNFhjWRN5oiN7hIUEipxBjhV181hhzccli0phZs1yqMjHCBd6oKAMjFdjr9Dy27TIB+Vo4f5vzOdkC844MVZxSeEEbbiIINhMpqek/HwT1TVyg076GBDULK7yjntrkQcQytT3FlIcAOLUPsFb9SbS6aGdfxGZuApCHWwey3WWqJ6cxEvJOyF63MgG0oaLeR5GUe7uktjeYcErmr9wVuOOoYfDrl4vbkQbwbFjMk5S5PucCI0tDxXkOt7CzjC/6VizztcyF7fM8vjQMrQPXbjsMNjNDH+u1BjZbHJkRwSxC5SqUcI/Poysd7V+6YBkOv4kvR0auHV5rFaOleZzPsx2rcQtAHQXbo5n2hUf5zTCF9TSDxaYllPIOs/7KhwFNxh6ThpSHt/nIcmCUN3fWy4R9MHOgJa7LPPIxtN0u8GpXqiQnQIJm5mLAiLVN8hM/TKdBN+r1UX7aFeIJImeCj0+OcAd8vSq5cqbSVdWgWzdpuEYFX0aPjfmRTEFPya3rm4iJ0u96DSRXRkOvi9iZfr+oCnZdqFbpAgfgGDgQ+E+hKkKueKH0HkV2gxaNTKG9wNllsgZQmQ+dZ3KYKVRa78Nci9JRhVldwLS8z4hbnnL9vo3PFnfhE/PyX3QhflxFl6Mew42OMNtHGoFYGB9UV+MmmUwgF/3MWEGAZgTijuNOSmJi/hxc+P9uMztjIWIHx8PncbLEQjGdbWaWJboGdkgNC2Cap3KWtIokQh+vTsbJBXbK01Mo36Ks5YtAUiuL0P3w0wLGzuHQSL8ZR5TGc0ut9s62weMd/4pcVUbVICtBFSj9Brb5yW+mXPeR0IjMmkaaXETQ0qo88tlVquj4c4QeKDFcjYLn51GgX6xgM4/s31+FpnGcialu/ixx8HoCzs4JiceETANh8dDFiE7gtcnQXBRumcXGS5et7neljDTOwSJJmMMaCFMJPWcHs0jdr3o2WZ4C4z7gcGEK7kImUilTOlnpIg8/MRaWNmCSu8QPpGPPXjRBa6HLfyr3x9PBIWbr9MPUgXxzJN/Ow5ixgGoHPL1atT2bYDEprTyHOV5YitpZYpd7BpDjHNzFKj2qjkFeANed5TeeUCiESkKW9ERVeD4lQBoAAAA';const API='https://zon-of-insta-1.onrender.com';const AD_URL='https://asiafilm.org/4/3de0ed3bb9286e3adaa90f14b2d1d0a6';const TICKET_AD_URL='https://auctionr.org/4/ae64da386ee63dd06a886a75a74a1631';const REWARD=0;const MIN_WITHDRAW=2500000;
+let userId=localStorage.getItem('bd_user_id');if(!userId){userId='bd_'+crypto.randomUUID();localStorage.setItem('bd_user_id',userId)}let adminToken='';let admin4UserRows=[];let adSession='';let adStart=0;let balance=0;let toastTimer;
+function fmt(n){return Number(n||0).toLocaleString('en-US')}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function api(path,opts={}){const headers={'Content-Type':'application/json',...(opts.headers||{})};if(adminToken)headers.Authorization='Bearer '+adminToken;const r=await fetch(API+path,{...opts,headers});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||'Request failed');return d}
+// Referral system
+// Telegram Mini App referral deep links
+const telegramStartParam=(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initDataUnsafe&&window.Telegram.WebApp.initDataUnsafe.start_param)||'';
+const urlRefParam=new URLSearchParams(location.search).get('ref')||'';
+const referralParam=(telegramStartParam.startsWith('ref_')?telegramStartParam.slice(4):urlRefParam);
+function referralUrl(){return 'https://t.me/BabyDoge_Reward_Bot?startapp='+encodeURIComponent('ref_'+userId)}
+const referralStorageKey='bd_referral_processed_'+encodeURIComponent(referralParam||'none');
+async function loadReferral(){const linkEl=document.getElementById('refLink');if(!linkEl)return;linkEl.textContent=referralUrl();try{const d=await api('/api/referrals/'+encodeURIComponent(userId));document.getElementById('refCount').textContent=fmt(d.count||0)}catch(e){document.getElementById('refCount').textContent='0'}}
+async function copyReferral(){try{await navigator.clipboard.writeText(referralUrl());showToast('Referral link copied!')}catch(e){const ta=document.createElement('textarea');ta.value=referralUrl();document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('Referral link copied!')}}
+async function processReferral(){if(!referralParam||referralParam===userId)return;if(localStorage.getItem(referralStorageKey))return;try{const d=await api('/api/referrals/claim',{method:'POST',body:JSON.stringify({userId,referrerId:referralParam})});localStorage.setItem(referralStorageKey,'1');if(d.reward){balance=d.balance;document.getElementById('balance').textContent=fmt(balance);showToast('Referral bonus added!')}}catch(e){console.warn('Referral:',e.message)}}
+function showToast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.style.display='none',3000)}
+function showModal(html){const back=document.getElementById('modalBack');document.getElementById('modal').innerHTML=html;back.classList.add('show')}function closeModal(){document.getElementById('modalBack').classList.remove('show')}
+function showScreen(name){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(name).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.screen===name));const nav=document.querySelector('.bottom-nav');if(nav)nav.style.display=['home','refer','tasks'].includes(name)?'flex':'none';if(name==='withdraw')loadRequests();if(name==='admin')loadAdmin();if(name==='admin2')loadAdminTasks();if(name==='admin4')loadAdmin4Users();if(name==='admin5')loadAdminLivePayments();if(name==='livePayments')loadLivePayments();if(name==='superOffer')loadSuperOffer();if(name==='earnTicket')loadTicketBalance();if(['home','refer'].includes(name))loadReferral();if(name==='tasks')loadTasks()}
+function openProfile(){showModal(`<h2 class="modal-title">Profile & Support</h2><div class="profile-actions"><button class="submit-btn" onclick="adminLogin()">ADMIN PANEL</button><button class="secondary" onclick="admin2Login()">ADMIN PANEL 2</button><button class="secondary" onclick="admin3Login()">ADMIN PANEL 3</button><button class="secondary" onclick="admin4Login()">ADMIN PANEL 4</button><button class="secondary" onclick="admin5Login()">ADMIN PANEL 5</button><button class="secondary" onclick="closeModal();showScreen('contact')">CONTACT US</button><button class="secondary" onclick="closeModal()">CLOSE</button></div>`)}
 
-async function api(path,options={}){
- const headers=Object.assign({"Content-Type":"application/json"},options.headers||{});
- const t=storage.get("babydoge_session_token"); if(t) headers["X-Account-Token"]=t;
- if(adminToken) headers["X-Admin-Token"]=adminToken;
- const r=await fetch(API+path,{...options,headers,credentials:"omit"});
- let d; try{d=await r.json()}catch{d={ok:false,error:`Server returned HTTP ${r.status}`}}
- if(!r.ok||d?.ok===false){const e=new Error(d?.error||`Request failed (${r.status})`);e.status=r.status;throw e}
- return d;
-}
-function show(id){$(id)?.classList.add("show")} function hide(id){$(id)?.classList.remove("show")}
-function toast(m){const e=$("toast");e.textContent=m;e.style.opacity=1;e.style.transform="translate(-50%,0)";clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.style.opacity=0;e.style.transform="translate(-50%,20px)"},2600)}
-function showResult(ok,title,msg){$("resultIcon").textContent=ok?"✓":"!";$("resultTitle").textContent=title;$("resultText").textContent=msg;show("resultModal")}
-function switchPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});renderAll()}
-function setAccount(a){account=a;renderAll();$("status").textContent="CONNECTED";$("status").style.color="var(--green)"}
-function renderAll(){
- if(!account)return;
- $("coinBalance").textContent=Number(account.coinBalance||0).toLocaleString();
- $("ticketBalance").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("offerTickets").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("ticketPageBalance").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("dailyCount").textContent=Number(account.dailyAdsCount||0).toLocaleString();
- $("profileInfo").textContent=`${account.name} · ${Number(account.adsCount||0).toLocaleString()} ads · ${Number(account.referralsCount||0).toLocaleString()} referrals`;
- $("unlockOfferBtn").disabled=Number(account.ticketBalance||0)<OFFER_COST;
- renderHistory(account.superOfferHistory||[]);
- updateAdButton();
-}
-function renderHistory(items){
- const targets=["historyHome","historyOffer","historyTicket"];
- targets.forEach(id=>{$(id).replaceChildren();if(!items.length){$(id).innerHTML='<div style="color:#718d7d;font-size:11px">No Super Offer completed yet.</div>';return}
- items.slice(0,30).forEach(x=>{const d=document.createElement("div");d.className="history-item";d.innerHTML=`<div><b>+${Number(x.rewardCoins||0).toLocaleString()} BabyDoge</b><br><span>${new Date(x.completedAt).toLocaleString()}</span></div><span>−${Number(x.ticketCost||0)} 🎟</span>`;$(id).append(d)})});
-}
-function updateAdButton(){
- const b=$("watchTicketBtn"); if(!b)return;
- const daily=Number(account?.dailyAdsCount||0);
- if(pendingAd){b.disabled=false;b.textContent="⌛ Return to App";return}
- if(daily>=DAILY_LIMIT){b.disabled=true;b.textContent="Daily Limit Reached";return}
- const c=Math.max(0,cooldownUntil-Date.now()), br=Math.max(0,breakUntil-Date.now());
- if(c){b.disabled=true;b.textContent=`Cooldown ${Math.ceil(c/1000)}s`;return}
- if(br){b.disabled=true;b.textContent=`Break ${Math.ceil(br/1000)}s`;return}
- b.disabled=adBusy;b.textContent=adBusy?"⌛ Opening Ad":"▶ Watch Ads Get 1 Ticket";
-}
-function setCooldown(ms){cooldownUntil=Date.now()+Math.max(0,ms);clearInterval(ticker);ticker=setInterval(()=>{updateAdButton();if(Date.now()>=cooldownUntil&&Date.now()>=breakUntil){clearInterval(ticker);ticker=null}},250);updateAdButton()}
-function accountPopup(mode="create"){accountBusy=false;$("accountError").textContent="";$("nameInput").value="";$("accountTitle").textContent=mode==="check"?"Check Your Account":"Enter Your Name";$("accountText").textContent=mode==="check"?"Enter the same name you used previously to reconnect to your account.":"Create your account. Your rewards are stored on the server.";$("accountAction").textContent=mode==="check"?"Check Account":"Save";$("accountAction").dataset.mode=mode;show("accountModal");setTimeout(()=>$("nameInput").focus(),100)}
-async function saveOrCheck(){
- if(accountBusy)return; const name=$("nameInput").value.trim();if(!name)return;
- accountBusy=true;$("accountAction").disabled=true;$("accountError").textContent="";hide("accountModal");show("checkingModal");
- try{let d;if($("accountAction").dataset.mode==="check")d=await api("/api/account/check",{method:"POST",body:JSON.stringify({name})});else{try{d=await api("/api/account",{method:"POST",body:JSON.stringify({name})})}catch(e){if(e.status===409)d=await api("/api/account/check",{method:"POST",body:JSON.stringify({name}));else throw e}}storage.set("babydoge_session_token",d.sessionToken);setAccount(d.account);hide("checkingModal");toast("Account connected successfully")}
- catch(e){hide("checkingModal");show("accountModal");$("accountError").textContent=e.message||"Could not connect account."}
- finally{accountBusy=false;$("accountAction").disabled=false}
-}
-async function loadSession(){
- try{if(storage.get("babydoge_session_token")){const d=await api("/api/account/me");setAccount(d.account);if(pendingAd)await finishAd();return}
- const s=await api("/api/session");if(s.hasSession){const d=await api("/api/account/me");setAccount(d.account);if(pendingAd)await finishAd()}else{accountPopup("create")}
- }catch(e){$("status").textContent="OFFLINE";$("status").style.color="var(--danger)";if(e.status===401){storage.remove("babydoge_session_token");accountPopup("check")}else{toast(e.message||"Backend connection failed");accountPopup("check")}}
-}
-async function beginAd(){
- if(pendingAd){await finishAd();return} if(!account)return accountPopup("check");
- const daily=Number(account.dailyAdsCount||0);if(daily>=DAILY_LIMIT){showResult(false,"Daily Limit Reached","You have reached today's 100-ad limit. Come back tomorrow.");return}
- if(Date.now()<cooldownUntil||Date.now()<breakUntil)return;
- adBusy=true;updateAdButton();let adToken="";
- try{
-  const s=await api("/api/account/me/start-ad",{method:"POST",body:"{}"});adToken=s.adToken;
-  pendingAd={adToken,startedAt:Date.now(),leftApp:true};storage.set("babydoge_pending_ad",JSON.stringify(pendingAd));
-  window.open(ADS_URL,"_blank");
-  toast("Watch the ad for at least 8 seconds, then return to the app.");
-  setTimeout(()=>finishAd(),900);
- }catch(e){pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Ad Not Opened",e.message||"Could not open ad.");adBusy=false;updateAdButton()}
-}
-async function finishAd(){
- if(!pendingAd||!account||!pendingAd.leftApp)return;
- const elapsed=Date.now()-Number(pendingAd.startedAt||0),adToken=pendingAd.adToken;adBusy=true;updateAdButton();
- try{
-  if(elapsed<MIN_WATCH_MS){await api("/api/account/me/cancel-ad",{method:"POST",body:JSON.stringify({adToken})});pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Count Not Updated","Watch Ads minimum 8 seconds. Ticket not added.");setCooldown(COOLDOWN_MS);return}
-  const d=await api("/api/account/me/increment-ad",{method:"POST",body:JSON.stringify({adToken})});pendingAd=null;storage.remove("babydoge_pending_ad");setAccount(d.account);
-  if(Number(d.account.dailyAdsCount)%BREAK_EVERY===0){breakUntil=Date.now()+BREAK_MS;showResult(true,"1 Ticket Added","1 ticket added to your balance. A 5-minute break is now active.")}else showResult(true,"1 Ticket Added","1 ticket added to your balance.");
-  setCooldown(COOLDOWN_MS);
- }catch(e){pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Ticket Not Added",e.message||"Ad could not be verified.");setCooldown(COOLDOWN_MS)}
- finally{adBusy=false;updateAdButton()}
-}
-async function unlockOffer(){
- if(!account)return;
- if(offerUnlocked){
-  try{const d=await api("/api/account/me/super-offer/claim",{method:"POST",body:"{}"});setAccount(d.account);offerUnlocked=false;showResult(true,"Coin Claimed","+7,500,000 BabyDoge coin added to your balance.");}
-  catch(e){toast(e.message||"Could not claim coin.");renderAll()}
-  return;
- }
- if(Number(account.ticketBalance||0)<OFFER_COST){showResult(false,"Not Enough Tickets","You need 30 tickets to unlock this Super Offer.");return}
- $("unlockOfferBtn").disabled=true;
- try{const d=await api("/api/account/me/super-offer/unlock",{method:"POST",body:"{}"});setAccount(d.account);offerUnlocked=true;showResult(true,"Super Offer Unlocked","30 tickets were deducted. Your Claim Coin button is ready.");}
- catch(e){toast(e.message||"Could not unlock offer.");renderAll()}
-}
-async function openAdmin(){hide("profileModal");$("adminError").textContent="";show("adminLoginModal");setTimeout(()=>$("adminPassword").focus(),80)}
-async function adminAuth(){if(adminBusy)return;const p=$("adminPassword").value;if(!p){$("adminError").textContent="Enter password.";return}adminBusy=true;try{const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({password:p})});adminToken=d.adminToken;$("adminPassword").value="";hide("adminLoginModal");show("adminModal");await loadAdmin()}catch(e){$("adminError").textContent=e.message||"Admin login failed"}finally{adminBusy=false}}
-async function loadAdmin(){
- $("adminSummary").textContent="Loading users...";$("adminList").replaceChildren();
- try{const d=await api("/api/admin/users");const users=d.users||[];$("adminSummary").textContent=`${users.length} users · Ads, Super Offers and Referrals only`;
- users.forEach(u=>{const row=document.createElement("div");row.className="user-row";row.innerHTML=`<div class="user-name">${escapeHtml(u.name)}</div><div class="user-detail">Ads watched: <b>${Number(u.adsCount||0).toLocaleString()}</b><br>Super Offers completed: <b>${Number(u.superOffersCompleted||0).toLocaleString()}</b><br>Referrals: <b>${Number(u.referralsCount||0).toLocaleString()}</b></div>`;$("adminList").append(row)})}
- catch(e){$("adminSummary").textContent=e.message||"Could not load users."}
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-$("accountAction").onclick=saveOrCheck;$("nameInput").onkeydown=e=>{if(e.key==="Enter")saveOrCheck()};
-$("offerOpen").onclick=()=>switchPage("offerPage");$("ticketOpen").onclick=()=>switchPage("ticketPage");document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>switchPage("homePage"));
-$("watchTicketBtn").onclick=beginAd;$("unlockOfferBtn").onclick=unlockOffer;
-$("withdrawBtn").onclick=()=>toast("Withdrawal button is ready for your existing withdrawal flow.");
-$("profileBtn").onclick=()=>{if(!account)return accountPopup("check");$("profileInfo").textContent=`${account.name} · ${Number(account.adsCount||0).toLocaleString()} ads · ${Number(account.referralsCount||0).toLocaleString()} referrals`;show("profileModal")};
-$("profileClose").onclick=()=>hide("profileModal");$("adminOpen").onclick=openAdmin;$("adminLogin").onclick=adminAuth;$("adminPassword").onkeydown=e=>{if(e.key==="Enter")adminAuth()};$("adminLoginClose").onclick=()=>hide("adminLoginModal");$("adminRefresh").onclick=loadAdmin;$("adminClose").onclick=()=>hide("adminModal");$("resultClose").onclick=()=>hide("resultModal");
-$("logoutBtn").onclick=async()=>{try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}storage.remove("babydoge_session_token");storage.remove("babydoge_pending_ad");account=null;hide("profileModal");accountPopup("check")};
-["profileModal","adminLoginModal","adminModal","resultModal"].forEach(id=>$(id).onclick=e=>{if(e.target===$(id))hide(id)});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pendingAd)finishAd()});window.addEventListener("focus",()=>{if(pendingAd)finishAd()});window.addEventListener("pageshow",()=>{if(pendingAd)finishAd()});
-try{pendingAd=JSON.parse(storage.get("babydoge_pending_ad")||"null")}catch{pendingAd=null}
-loadSession();
-})();
-</script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#06140e">
-<title>BabyDoge Rewards</title>
-<style>
-:root{
-  --bg:#06140e;--bg2:#0a1d14;--panel:#0d2419;--panel2:#102c20;
-  --line:rgba(111,255,185,.14);--muted:#8fa99b;--white:#f5fff9;
-  --green:#55f0a6;--green2:#16bd73;--deep:#062719;--danger:#ff7380;
-}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:
-radial-gradient(circle at 50% -10%,#1b5a3b 0,transparent 38%),
-radial-gradient(circle at 0 40%,#0c3020 0,transparent 32%),var(--bg);
-color:var(--white);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:18px}
-button{font:inherit}
-.app{width:min(100%,460px);margin:0 auto;padding-bottom:30px}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.08em;font-size:13px}
-.logo{width:40px;height:40px;border-radius:14px;background:linear-gradient(145deg,#7affc0,#16b978);display:grid;place-items:center;color:#042216;font-size:20px;box-shadow:0 10px 30px #16bd7350}
-.status{border:1px solid var(--line);border-radius:30px;padding:7px 10px;color:#a9c0b2;font-size:10px;letter-spacing:.08em}
-.status:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px}
-.profile{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:#0c2118;color:white;cursor:pointer;font-size:20px;display:grid;place-items:center}
-h1{font-size:27px;letter-spacing:-.05em;margin:0 0 7px}
-.sub{color:var(--muted);font-size:13px;margin:0 0 20px;line-height:1.55}
-.page{display:none;animation:pageIn .22s ease}
-.page.active{display:block}
-.card{position:relative;overflow:hidden;background:linear-gradient(145deg,#123322,#0a1b13 72%);border:1px solid var(--line);border-radius:27px;padding:22px;box-shadow:0 25px 70px #0008}
-.card:before{content:"";position:absolute;width:190px;height:190px;right:-80px;top:-95px;border-radius:50%;background:#55f0a617;filter:blur(2px);pointer-events:none}
-.coin-card{padding:25px 22px 19px}
-.label{font-size:11px;letter-spacing:.16em;color:#9ab5a6;font-weight:800}
-.coin-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.coin-icon{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#73ffc0,#20c77f);display:grid;place-items:center;font-size:23px;color:#052719;box-shadow:0 8px 24px #18c57a35}
-.coin-balance{font-size:46px;line-height:1;font-weight:900;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
-.coin-caption{color:#8da899;font-size:12px;margin:9px 0 0 58px}
-.withdraw{margin-top:18px;width:100%;border:1px solid #55f0a633;border-radius:14px;background:#0a2117;color:#c9f9df;padding:12px;font-weight:800;cursor:pointer}
-.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.action-box{min-height:116px;border:1px solid var(--line);border-radius:21px;background:linear-gradient(145deg,#102d20,#0b1f16);padding:18px 15px;text-align:left;color:white;cursor:pointer;box-shadow:0 16px 40px #0005;transition:.15s}
-.action-box:active{transform:scale(.98)}
-.action-box .mini-icon{font-size:23px;margin-bottom:13px}
-.action-box b{display:block;font-size:14px}
-.action-box span{display:block;color:#87a797;font-size:11px;margin-top:5px;line-height:1.4}
-.ticket-box{margin-top:14px;text-align:center;padding:17px;border:1px solid #55f0a62a;border-radius:20px;background:linear-gradient(145deg,#143b28,#0b2117)}
-.ticket-value{font-size:30px;font-weight:900;margin-top:5px}
-.ticket-value small{font-size:12px;color:#8eaa9a;letter-spacing:.1em}
-.history-card{margin-top:14px}
-.section-title{font-size:13px;font-weight:850;letter-spacing:.04em}
-.history{margin-top:12px;display:grid;gap:8px;max-height:260px;overflow:auto}
-.history-item{display:flex;justify-content:space-between;gap:10px;padding:12px;border-radius:14px;background:#0a1d14;border:1px solid #ffffff08}
-.history-item b{font-size:12px}.history-item span{font-size:10px;color:#80988a}
-.back{border:0;background:transparent;color:#8eb9a3;padding:4px 0;margin-bottom:13px;cursor:pointer;font-weight:800}
-.offer-card{text-align:center;padding:24px 20px}
-.offer-top{display:flex;align-items:center;justify-content:center;gap:10px}
-.offer-amount{font-size:31px;font-weight:950;letter-spacing:-.04em}
-.offer-note{margin:18px 0;padding:14px;border-radius:15px;background:#0a1d14;border:1px solid #ffffff09;color:#c7e4d4;font-size:12px;line-height:1.55}
-.price-box{display:inline-flex;align-items:center;gap:7px;border:1px solid #55f0a638;background:#0a2117;border-radius:13px;padding:11px 14px;font-weight:850;color:#bdf7d8}
-.big-action{width:100%;border:0;border-radius:17px;padding:17px;background:linear-gradient(135deg,#68f8b3,#16bd73);color:#032216;font-weight:950;cursor:pointer;box-shadow:0 14px 35px #16bd7340}
-.big-action:disabled{background:#1b3328;color:#789486;box-shadow:none;cursor:not-allowed}
-.ticket-balance{margin:15px 0 18px;color:#9bb7a7;font-size:12px}
-.ticket-balance b{color:white;font-size:20px}
-.ad-card .ad-reward{display:flex;align-items:center;justify-content:center;gap:10px}
-.ad-symbol{width:54px;height:54px;border-radius:17px;background:#123a28;display:grid;place-items:center;color:var(--green);font-size:25px}
-.ad-reward strong{font-size:32px}
-.notice{margin-top:15px;padding:13px;border-radius:14px;background:#0a1d14;border:1px solid #ffffff09;color:#b8d4c4;font-size:11px;line-height:1.55}
-.ad-btn{margin-top:18px}
-.daily{font-size:11px;color:#7f9a8b;text-align:center;margin-top:11px}
-.modal-backdrop{position:fixed;inset:0;background:#020a06dd;backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
-.modal-backdrop.show{display:flex}
-.modal{width:min(100%,380px);background:linear-gradient(145deg,#123322,#091a12);border:1px solid var(--line);border-radius:25px;padding:25px;text-align:center;box-shadow:0 30px 90px #000b;animation:pop .22s ease}
-.modal-icon{width:58px;height:58px;border-radius:18px;margin:0 auto 14px;background:#16402b;display:grid;place-items:center;color:var(--green);font-size:24px}
-.modal h2{font-size:19px;margin:0 0 8px}.modal p{font-size:12px;color:#9bb4a5;line-height:1.6;margin:0 0 18px}
-.field{width:100%;padding:13px;border-radius:13px;border:1px solid #ffffff12;background:#07130e;color:white;outline:none;margin-bottom:10px}
-.modal button{width:100%;padding:13px;border-radius:13px;border:1px solid #ffffff14;background:#1a3327;color:white;font-weight:800;cursor:pointer}
-.modal button.primary{background:var(--green);color:#052417;border:0}
-.modal button+button{margin-top:9px}
-.error{color:#ff9eaa!important}.small{font-size:10px!important}
-.admin-list{max-height:370px;overflow:auto;text-align:left;margin-top:12px}
-.user-row{padding:13px 0;border-bottom:1px solid var(--line)}
-.user-name{font-weight:850;font-size:13px}.user-detail{font-size:11px;color:#8fa99b;margin-top:5px;line-height:1.55}
-.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#123322;border:1px solid #55f0a62a;border-radius:15px;padding:12px 16px;color:#eafff2;font-size:12px;box-shadow:0 15px 40px #0008;transition:.25s;z-index:40;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
-@keyframes pop{from{transform:translateY(8px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
-@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@media(max-width:380px){.coin-balance{font-size:39px}}
-</style>
-</head>
-<body>
-<main class="app">
-<header class="top">
-  <div class="brand"><div class="logo">🐶</div> BABYDOGE REWARDS</div>
-  <div style="display:flex;gap:8px;align-items:center"><div class="status" id="status">CONNECTING</div><button class="profile" id="profileBtn">♙</button></div>
-</header>
+async function loadLivePayments(){const el=document.getElementById('livePaymentList');if(!el)return;try{const d=await api('/api/live-payments');const payments=d.payments||[];if(!payments.length){el.innerHTML='<div class="live-payment-empty">No live payments yet.</div>';return}el.innerHTML=payments.map(p=>`<div class="live-payment-item"><div class="live-payment-text">${esc(p.text)}</div><button class="live-payment-channel" onclick="openPaymentChannel()">SEE ALL PAYMENT</button></div>`).join('')}catch(e){el.innerHTML=`<div class="live-payment-empty">${esc(e.message)}</div>`}}
+function openPaymentChannel(){window.open('https://t.me/bonk_taping','_blank')}
+function admin5Login(){closeModal();showModal(`<h2 class="modal-title">Admin Panel 5</h2><div class="fieldbox"><label>Admin password</label><input type="password" id="adminPass5" placeholder="Enter password"></div><button class="submit-btn" onclick="doAdmin5Login()">LOGIN</button><button class="secondary" style="width:100%;margin-top:10px" onclick="closeModal()">CANCEL</button>`)}
+async function doAdmin5Login(){const p=document.getElementById('adminPass5').value;try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:p})});adminToken=d.token;closeModal();showScreen('admin5')}catch(e){showToast(e.message)}}
+async function addLivePayment(){const input=document.getElementById('livePaymentText');const text=(input?.value||'').trim();if(!text){showToast('Please enter payment text');return}try{await api('/api/admin/live-payments',{method:'POST',body:JSON.stringify({text})});input.value='';showToast('Live payment added');await loadAdminLivePayments();await loadLivePayments()}catch(e){showToast(e.message)}}
+async function loadAdminLivePayments(){const el=document.getElementById('adminLivePayments');if(!el)return;el.innerHTML='<div class="empty">Loading payments...</div>';try{const d=await api('/api/admin/live-payments');const payments=d.payments||[];if(!payments.length){el.innerHTML='<div class="empty">No payments added yet.</div>';return}el.innerHTML=payments.map(p=>`<div class="live-admin-item"><div class="live-payment-text">${esc(p.text)}</div><div class="live-admin-time">${p.createdAt?new Date(p.createdAt).toLocaleString():'—'}</div></div>`).join('')}catch(e){el.innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 
-<section id="homePage" class="page active">
-  <h1>BabyDoge Rewards</h1>
-  <p class="sub">Earn tickets from ads, unlock Super Offers and grow your BabyDoge balance.</p>
-
-  <div class="card coin-card">
-    <div class="label">TOTAL BABYDOGE COIN</div>
-    <div class="coin-row"><div class="coin-icon">🐶</div><div class="coin-balance" id="coinBalance">0</div></div>
-    <div class="coin-caption">Available BabyDoge balance</div>
-    <button class="withdraw" id="withdrawBtn">↗ Withdraw</button>
-  </div>
-
-  <div class="action-grid">
-    <button class="action-box" id="offerOpen"><div class="mini-icon">⚡</div><b>Unlock Super Offer</b><span>Use tickets to unlock a coin reward.</span></button>
-    <button class="action-box" id="ticketOpen"><div class="mini-icon">🎟</div><b>Earn Ticket</b><span>Watch ads for 1 ticket each.</span></button>
-  </div>
-
-  <div class="ticket-box">
-    <div class="label">TOTAL TICKET BALANCE</div>
-    <div class="ticket-value"><span id="ticketBalance">0</span> <small>TICKETS</small></div>
-  </div>
-
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyHome"><div style="color:#718d7d;font-size:11px">No Super Offer completed yet.</div></div>
-  </div>
-</section>
-
-<section id="offerPage" class="page">
-  <button class="back" data-back>← Back to Home</button>
-  <h1>Super Offer</h1>
-  <p class="sub">Unlock the offer with tickets and claim your BabyDoge coins.</p>
-  <div class="card offer-card">
-    <div class="offer-top"><div class="coin-icon">🐶</div><div class="offer-amount">+7,500,000</div></div>
-    <div class="price-box">🎟 Price = 30 Tickets</div>
-    <div class="ticket-balance">Your ticket balance: <b id="offerTickets">0</b></div>
-    <div class="offer-note"><b>Unlock Super Offer</b><br>Unlock this offer and get <b>7,500,000 BabyDoge coin</b>.</div>
-    <button class="big-action" id="unlockOfferBtn">Unlock Super Offer</button>
-  </div>
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyOffer"></div>
-  </div>
-</section>
-
-<section id="ticketPage" class="page">
-  <button class="back" data-back>← Back to Home</button>
-  <h1>Earn Ticket</h1>
-  <p class="sub">Watch the ad for at least 8 seconds and receive 1 ticket.</p>
-  <div class="card offer-card ad-card">
-    <div class="ad-reward"><div class="ad-symbol">🎟</div><strong>+1</strong></div>
-    <div class="notice"><b>Watch Ads minimum 8 seconds</b><br>1 Ads = 1 Ticket</div>
-    <button class="big-action ad-btn" id="watchTicketBtn">▶ Watch Ads Get 1 Ticket</button>
-    <div class="daily">Daily: <span id="dailyCount">0</span>/100 ads</div>
-    <div class="ticket-balance">Total ticket balance: <b id="ticketPageBalance">0</b></div>
-  </div>
-  <div class="card history-card">
-    <div class="section-title">Super Offer History</div>
-    <div class="history" id="historyTicket"></div>
-  </div>
-</section>
-</main>
-
-<!-- Account -->
-<div class="modal-backdrop" id="accountModal"><div class="modal">
-  <div class="modal-icon">🐶</div><h2 id="accountTitle">Enter Your Name</h2>
-  <p id="accountText">Create your account. Your rewards are stored on the server.</p>
-  <input class="field" id="nameInput" maxlength="40" placeholder="Enter your name">
-  <button class="primary" id="accountAction">Save</button><p class="small error" id="accountError"></p>
-</div></div>
-
-<div class="modal-backdrop" id="checkingModal"><div class="modal">
-  <div class="modal-icon">◌</div><h2>Checking Account</h2><p>Please wait while we securely check your backend account.</p>
-</div></div>
-
-<!-- Profile -->
-<div class="modal-backdrop" id="profileModal"><div class="modal">
-  <div class="modal-icon">♙</div><h2>Profile</h2><p id="profileInfo">Not connected</p>
-  <button class="primary" id="adminOpen">Admin Panel</button><button id="logoutBtn">Change Account</button><button id="profileClose">Close</button>
-</div></div>
-
-<!-- Admin -->
-<div class="modal-backdrop" id="adminLoginModal"><div class="modal">
-  <div class="modal-icon">🔐</div><h2>Admin Access</h2><p>Enter the admin password.</p>
-  <input class="field" id="adminPassword" type="password" placeholder="Admin password">
-  <button class="primary" id="adminLogin">Continue</button><button id="adminLoginClose">Cancel</button>
-  <p class="small error" id="adminError"></p>
-</div></div>
-
-<div class="modal-backdrop" id="adminModal"><div class="modal" style="max-width:420px">
-  <div style="display:flex;align-items:center;justify-content:space-between"><h2 style="margin:0">Admin Panel 4</h2><button id="adminRefresh" style="width:auto;padding:8px 11px">↻</button></div>
-  <p id="adminSummary" style="text-align:left;margin-top:8px">Loading...</p>
-  <div class="admin-list" id="adminList"></div><button id="adminClose">Close</button>
-</div></div>
-
-<!-- Result -->
-<div class="modal-backdrop" id="resultModal"><div class="modal">
-  <div class="modal-icon" id="resultIcon">✓</div><h2 id="resultTitle">Done</h2><p id="resultText"></p><button class="primary" id="resultClose">Continue</button>
-</div></div>
-<div class="toast" id="toast"></div>
-
-<script>
-(() => {
-"use strict";
-const API="https://helipedo.onrender.com";
-const ADS_URL="https://auctionr.org/4/ae64da386ee63dd06a886a75a74a1631";
-const MIN_WATCH_MS=8000, COOLDOWN_MS=30000, DAILY_LIMIT=100, BREAK_EVERY=10, BREAK_MS=300000;
-const OFFER_COST=30, OFFER_REWARD=7500000;
-const $=id=>document.getElementById(id);
-const storage={get:k=>{try{return localStorage.getItem(k)||""}catch{return""}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},remove:k=>{try{localStorage.removeItem(k)}catch{}}};
-let account=null, pendingAd=null, adBusy=false, accountBusy=false, adminToken="", adminBusy=false, toastTimer, cooldownUntil=0, breakUntil=0, ticker=null, offerUnlocked=false;
-
-async function api(path,options={}){
- const headers=Object.assign({"Content-Type":"application/json"},options.headers||{});
- const t=storage.get("babydoge_session_token"); if(t) headers["X-Account-Token"]=t;
- if(adminToken) headers["X-Admin-Token"]=adminToken;
- const r=await fetch(API+path,{...options,headers,credentials:"omit"});
- let d; try{d=await r.json()}catch{d={ok:false,error:`Server returned HTTP ${r.status}`}}
- if(!r.ok||d?.ok===false){const e=new Error(d?.error||`Request failed (${r.status})`);e.status=r.status;throw e}
- return d;
+let tasksCache=[];
+let pendingTaskSessions={};
+let taskWaitingId=null;
+function taskStorageKey(taskId){return 'bd_task_joined_'+taskId}
+async function loadTasks(){
+  const el=document.getElementById('taskList'); if(!el)return;
+  try{
+    const d=await api('/api/tasks?userId='+encodeURIComponent(userId));
+    tasksCache=d.tasks||[];
+    if(!tasksCache.length){el.innerHTML='<div class="empty">No tasks available right now.</div>';return}
+    el.innerHTML=tasksCache.map(t=>{
+      const joined=localStorage.getItem(taskStorageKey(t.id))==='1';
+      const claimed=!!t.claimed;
+      const label=claimed?'CLAIMED':(joined?'CLAIM':'JOIN');
+      const action=claimed?'':joined?`claimTask(${t.id})`:`joinTask(${t.id})`;
+      return `<div class="task-card"><div class="task-inner"><div class="task-top"><div class="task-name">${esc(t.name)}</div><div class="task-reward">+${fmt(t.amount)}</div></div><div class="task-desc">Join the task channel, return to the app, then claim your reward.</div><button class="task-btn ${joined&&!claimed?'claim':''}" ${claimed?'disabled':''} onclick="${action}">${label}</button></div></div>`;
+    }).join('');
+  }catch(e){el.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
 }
-function show(id){$(id)?.classList.add("show")} function hide(id){$(id)?.classList.remove("show")}
-function toast(m){const e=$("toast");e.textContent=m;e.style.opacity=1;e.style.transform="translate(-50%,0)";clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.style.opacity=0;e.style.transform="translate(-50%,20px)"},2600)}
-function showResult(ok,title,msg){$("resultIcon").textContent=ok?"✓":"!";$("resultTitle").textContent=title;$("resultText").textContent=msg;show("resultModal")}
-function switchPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});renderAll()}
-function setAccount(a){account=a;renderAll();$("status").textContent="CONNECTED";$("status").style.color="var(--green)"}
-function renderAll(){
- if(!account)return;
- $("coinBalance").textContent=Number(account.coinBalance||0).toLocaleString();
- $("ticketBalance").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("offerTickets").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("ticketPageBalance").textContent=Number(account.ticketBalance||0).toLocaleString();
- $("dailyCount").textContent=Number(account.dailyAdsCount||0).toLocaleString();
- $("profileInfo").textContent=`${account.name} · ${Number(account.adsCount||0).toLocaleString()} ads · ${Number(account.referralsCount||0).toLocaleString()} referrals`;
- $("unlockOfferBtn").disabled=Number(account.ticketBalance||0)<OFFER_COST;
- renderHistory(account.superOfferHistory||[]);
- updateAdButton();
+async function joinTask(id){
+  try{
+    const d=await api('/api/tasks/'+id+'/start',{method:'POST',body:JSON.stringify({userId})});
+    pendingTaskSessions[id]=d.sessionId;
+    taskWaitingId=id;
+    const w=window.open(d.link,'_blank');
+    if(!w)showToast('Allow pop-ups to open the task link.');
+    showModal(`<div class="modal center"><div style="font-size:34px">✦</div><h2 class="modal-title">Join TIN APP</h2><p class="modal-text">Join the channel, then return to this app. The task button will change to <b>CLAIM</b>.</p><button class="submit-btn" onclick="markTaskJoined(${id})">I'M BACK</button></div>`);
+  }catch(e){showToast(e.message)}
 }
-function renderHistory(items){
- const targets=["historyHome","historyOffer","historyTicket"];
- targets.forEach(id=>{$(id).replaceChildren();if(!items.length){$(id).innerHTML='<div style="color:#718d7d;font-size:11px">No Super Offer completed yet.</div>';return}
- items.slice(0,30).forEach(x=>{const d=document.createElement("div");d.className="history-item";d.innerHTML=`<div><b>+${Number(x.rewardCoins||0).toLocaleString()} BabyDoge</b><br><span>${new Date(x.completedAt).toLocaleString()}</span></div><span>−${Number(x.ticketCost||0)} 🎟</span>`;$(id).append(d)})});
+async function markTaskJoined(id){
+  if(!pendingTaskSessions[id])return;
+  localStorage.setItem(taskStorageKey(id),'1');
+  closeModal();
+  showToast('Task ready to claim');
+  loadTasks();
 }
-function updateAdButton(){
- const b=$("watchTicketBtn"); if(!b)return;
- const daily=Number(account?.dailyAdsCount||0);
- if(pendingAd){b.disabled=false;b.textContent="⌛ Return to App";return}
- if(daily>=DAILY_LIMIT){b.disabled=true;b.textContent="Daily Limit Reached";return}
- const c=Math.max(0,cooldownUntil-Date.now()), br=Math.max(0,breakUntil-Date.now());
- if(c){b.disabled=true;b.textContent=`Cooldown ${Math.ceil(c/1000)}s`;return}
- if(br){b.disabled=true;b.textContent=`Break ${Math.ceil(br/1000)}s`;return}
- b.disabled=adBusy;b.textContent=adBusy?"⌛ Opening Ad":"▶ Watch Ads Get 1 Ticket";
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&taskWaitingId&&pendingTaskSessions[taskWaitingId]){const id=taskWaitingId;taskWaitingId=null;setTimeout(()=>markTaskJoined(id),250)}});
+async function claimTask(id){
+  const sessionId=pendingTaskSessions[id];
+  if(!sessionId){showToast('Please tap JOIN first');return}
+  try{
+    const d=await api('/api/tasks/'+id+'/claim',{method:'POST',body:JSON.stringify({userId,sessionId})});
+    balance=d.balance;
+    document.getElementById('balance').textContent=fmt(balance);
+    localStorage.removeItem(taskStorageKey(id));
+    delete pendingTaskSessions[id];
+    showModal(`<div class="modal center"><img class="coin-img" src="${COIN_SRC}" style="width:76px;height:76px;object-fit:contain;margin:auto;filter:drop-shadow(0 0 14px #f6c74455)" alt="BabyDoge coin"><h2 class="modal-title" style="margin-top:14px">${fmt(d.reward)}+ Coin Added</h2><p class="modal-text"><b>${fmt(d.reward)}</b> BabyDoge coins have been added to your balance.</p><div class="gold-line"></div><p class="modal-text">Total Balance<br><strong style="font-size:25px;color:#ffdf76">${fmt(d.balance)}</strong></p><button class="submit-btn" onclick="closeModal()">AWESOME</button></div>`);
+    loadTasks();
+  }catch(e){showToast(e.message)}
 }
-function setCooldown(ms){cooldownUntil=Date.now()+Math.max(0,ms);clearInterval(ticker);ticker=setInterval(()=>{updateAdButton();if(Date.now()>=cooldownUntil&&Date.now()>=breakUntil){clearInterval(ticker);ticker=null}},250);updateAdButton()}
-function accountPopup(mode="create"){accountBusy=false;$("accountError").textContent="";$("nameInput").value="";$("accountTitle").textContent=mode==="check"?"Check Your Account":"Enter Your Name";$("accountText").textContent=mode==="check"?"Enter the same name you used previously to reconnect to your account.":"Create your account. Your rewards are stored on the server.";$("accountAction").textContent=mode==="check"?"Check Account":"Save";$("accountAction").dataset.mode=mode;show("accountModal");setTimeout(()=>$("nameInput").focus(),100)}
-async function saveOrCheck(){
- if(accountBusy)return; const name=$("nameInput").value.trim();if(!name)return;
- accountBusy=true;$("accountAction").disabled=true;$("accountError").textContent="";hide("accountModal");show("checkingModal");
- try{let d;if($("accountAction").dataset.mode==="check")d=await api("/api/account/check",{method:"POST",body:JSON.stringify({name})});else{try{d=await api("/api/account",{method:"POST",body:JSON.stringify({name})})}catch(e){if(e.status===409)d=await api("/api/account/check",{method:"POST",body:JSON.stringify({name}));else throw e}}storage.set("babydoge_session_token",d.sessionToken);setAccount(d.account);hide("checkingModal");toast("Account connected successfully")}
- catch(e){hide("checkingModal");show("accountModal");$("accountError").textContent=e.message||"Could not connect account."}
- finally{accountBusy=false;$("accountAction").disabled=false}
+function admin2Login(){closeModal();showModal(`<h2 class="modal-title">Admin Panel 2</h2><div class="fieldbox"><label>Admin password</label><input type="password" id="adminPass2" placeholder="Enter password"></div><button class="submit-btn" onclick="doAdmin2Login()">LOGIN</button><button class="secondary" style="width:100%;margin-top:10px" onclick="closeModal()">CANCEL</button>`)}
+async function doAdmin2Login(){const p=document.getElementById('adminPass2').value;try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:p})});adminToken=d.token;closeModal();showScreen('admin2')}catch(e){showToast(e.message)}}
+async function addTask(){
+  const name=document.getElementById('taskName').value.trim();
+  const link=document.getElementById('taskLink').value.trim();
+  const amount=Number(document.getElementById('taskAmount').value);
+  if(!name){showToast('Please enter a task name');return}
+  if(!link){showToast('Please enter a task link');return}
+  if(!Number.isSafeInteger(amount)||amount<=0){showToast('Please enter a valid amount');return}
+  try{await api('/api/admin/tasks',{method:'POST',body:JSON.stringify({name,link,amount})});document.getElementById('taskName').value='';document.getElementById('taskLink').value='';document.getElementById('taskAmount').value='';showToast('New task added');loadAdminTasks();loadTasks()}catch(e){showToast(e.message)}
 }
-async function loadSession(){
- try{if(storage.get("babydoge_session_token")){const d=await api("/api/account/me");setAccount(d.account);if(pendingAd)await finishAd();return}
- const s=await api("/api/session");if(s.hasSession){const d=await api("/api/account/me");setAccount(d.account);if(pendingAd)await finishAd()}else{accountPopup("create")}
- }catch(e){$("status").textContent="OFFLINE";$("status").style.color="var(--danger)";if(e.status===401){storage.remove("babydoge_session_token");accountPopup("check")}else{toast(e.message||"Backend connection failed");accountPopup("check")}}
+async function loadAdminTasks(){
+  const el=document.getElementById('adminTasks');if(!el)return;
+  try{
+    const d=await api('/api/admin/tasks');
+    if(!d.tasks.length){el.innerHTML='<div class="empty">No tasks yet.</div>';return}
+    el.innerHTML=d.tasks.map(t=>`<div class="task-admin-row"><div class="req-top"><b class="req-amount">${esc(t.name)}</b><span class="status complete">+${fmt(t.amount)}</span></div><div class="req-meta">Link: ${esc(t.link)}<br>Task ID: #${esc(t.id)}</div><button class="danger-btn" onclick="deleteTask(${t.id})">DELETE TASK</button></div>`).join('');
+  }catch(e){el.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
 }
-async function beginAd(){
- if(pendingAd){await finishAd();return} if(!account)return accountPopup("check");
- const daily=Number(account.dailyAdsCount||0);if(daily>=DAILY_LIMIT){showResult(false,"Daily Limit Reached","You have reached today's 100-ad limit. Come back tomorrow.");return}
- if(Date.now()<cooldownUntil||Date.now()<breakUntil)return;
- adBusy=true;updateAdButton();let adToken="";
- try{
-  const s=await api("/api/account/me/start-ad",{method:"POST",body:"{}"});adToken=s.adToken;
-  pendingAd={adToken,startedAt:Date.now(),leftApp:true};storage.set("babydoge_pending_ad",JSON.stringify(pendingAd));
-  window.open(ADS_URL,"_blank");
-  toast("Watch the ad for at least 8 seconds, then return to the app.");
-  setTimeout(()=>finishAd(),900);
- }catch(e){pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Ad Not Opened",e.message||"Could not open ad.");adBusy=false;updateAdButton()}
+async function deleteTask(id){if(!confirm('Delete this task?'))return;try{await api('/api/admin/tasks/'+id,{method:'DELETE'});showToast('Task deleted');loadAdminTasks();loadTasks()}catch(e){showToast(e.message)}}
+async function refresh(){try{const d=await api('/api/user/'+encodeURIComponent(userId));balance=d.balance;document.getElementById('balance').textContent=fmt(balance);await syncValidAdsCount(d.validAdsCount||0);renderMinerState(d.miner||{activeMiners:0,hashRate:0,miners:[]});startMinerPolling();if(d.banned){showModal(`<div class="modal center"><div style="font-size:35px">⛔</div><h2 class="modal-title">Your account is banned</h2><p class="modal-text">${esc(d.banReason||'No reason provided')}</p></div>`);return}if(!d.binanceId&&!localStorage.getItem('bd_binance_setup_done'))showBinanceSetup()}catch(e){if(e.message.includes('banned'))showModal(`<div class="modal center"><h2 class="modal-title">Your account is banned</h2><p class="modal-text">${esc(e.message.replace('Your account is banned: ',''))}</p></div>`);else showToast(e.message)}}
+function showBinanceSetup(){showModal(`<h2 class="modal-title">Enter your Binance ID</h2><p class="modal-text">Please add your Binance ID to continue using the app.</p><div class="fieldbox"><label>Binance ID</label><input id="firstBinanceId" placeholder="Enter Binance ID" autocomplete="off"></div><button class="submit-btn" onclick="saveFirstBinanceId()">SAVE</button>`)}
+async function saveFirstBinanceId(){const id=document.getElementById('firstBinanceId').value.trim();if(!id){showToast('Please enter your Binance ID');return}try{await api('/api/binance/save',{method:'POST',body:JSON.stringify({userId,binanceId:id})});localStorage.setItem('bd_binance_setup_done','1');const withdrawId=document.getElementById('binanceId');if(withdrawId)withdrawId.value=id;closeModal();showToast('Binance ID saved')}catch(e){showToast(e.message)}}
+function admin3Login(){closeModal();showModal(`<h2 class="modal-title">Admin Panel 3</h2><div class="fieldbox"><label>Admin password</label><input type="password" id="adminPass3" placeholder="Enter password"></div><button class="submit-btn" onclick="doAdmin3Login()">LOGIN</button><button class="secondary" style="width:100%;margin-top:10px" onclick="closeModal()">CANCEL</button>`)}
+async function doAdmin3Login(){const p=document.getElementById('adminPass3').value;try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:p})});adminToken=d.token;closeModal();showScreen('admin3')}catch(e){showToast(e.message)}}
+async function banBinanceAccount(){const binanceId=document.getElementById('banBinanceId').value.trim();const reason=document.getElementById('banReason').value.trim();if(!binanceId||!reason){showToast('Enter Binance ID and ban reason');return}if(!confirm('Ban the account linked to this Binance ID?'))return;try{const d=await api('/api/admin/ban-binance',{method:'POST',body:JSON.stringify({binanceId,reason})});showModal(`<div class="modal center"><div style="font-size:34px">⛔</div><h2 class="modal-title">Your account is banned</h2><p class="modal-text">${esc(d.reason)}</p><button class="submit-btn" onclick="closeModal();showScreen('admin3')">OK</button></div>`);document.getElementById('banBinanceId').value='';document.getElementById('banReason').value=''}catch(e){showToast(e.message)}}
+function admin4Login(){closeModal();showModal(`<h2 class="modal-title">Admin Panel 4</h2><div class="fieldbox"><label>Admin password</label><input type="password" id="adminPass4" placeholder="Enter password"></div><button class="submit-btn" onclick="doAdmin4Login()">LOGIN</button><button class="secondary" style="width:100%;margin-top:10px" onclick="closeModal()">CANCEL</button>`)}
+async function doAdmin4Login(){const p=document.getElementById('adminPass4').value;try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:p})});adminToken=d.token;closeModal();showScreen('admin4')}catch(e){showToast(e.message)}}
+async function unbanBinanceAccount(){const binanceId=document.getElementById('unbanBinanceId').value.trim();if(!binanceId){showToast('Enter Binance ID');return}if(!confirm('Unban the account linked to this Binance ID?'))return;try{await api('/api/admin/unban-binance',{method:'POST',body:JSON.stringify({binanceId})});showToast('Account unbanned');document.getElementById('unbanBinanceId').value=''}catch(e){showToast(e.message)}}
+async function loadAdmin4Users(){const el=document.getElementById('admin4Users');if(!el)return;el.innerHTML='<div class="empty">Loading accounts…</div>';try{const d=await api('/api/admin/users');admin4UserRows=d.users||[];renderAdmin4Users(admin4UserRows)}catch(e){el.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+function filterAdmin4Users(){const q=(document.getElementById('admin4Search')?.value||'').trim().toLowerCase();renderAdmin4Users(admin4UserRows.filter(u=>String(u.userId||'').toLowerCase().includes(q)||String(u.binanceId||'').toLowerCase().includes(q)))}
+function renderAdmin4Users(rows){
+  const el=document.getElementById('admin4Users');if(!el)return;
+  if(!rows.length){el.innerHTML='<div class="empty">No accounts found.</div>';return}
+  el.innerHTML=rows.map(u=>`<div class="admin4-user">
+    <div class="admin4-user-title">${esc(u.binanceId||'Binance ID not saved')}</div>
+    <div class="admin4-user-meta">User ID: ${esc(u.userId)}<br>Created: ${esc(u.createdAt?new Date(u.createdAt).toLocaleString():'—')}</div>
+    <div class="admin4-stats">
+      <div class="admin4-stat"><div class="admin4-stat-label">Ads Watched</div><div class="admin4-stat-value">${fmt(u.validAdsCount)}</div></div>
+      <div class="admin4-stat"><div class="admin4-stat-label">Super Offers Completed</div><div class="admin4-stat-value">${fmt(u.superOffersCompleted)}</div></div>
+      <div class="admin4-stat"><div class="admin4-stat-label">Referrals</div><div class="admin4-stat-value">${fmt(u.referrals)}</div></div>
+    </div>
+  </div>`).join('')
 }
-async function finishAd(){
- if(!pendingAd||!account||!pendingAd.leftApp)return;
- const elapsed=Date.now()-Number(pendingAd.startedAt||0),adToken=pendingAd.adToken;adBusy=true;updateAdButton();
- try{
-  if(elapsed<MIN_WATCH_MS){await api("/api/account/me/cancel-ad",{method:"POST",body:JSON.stringify({adToken})});pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Count Not Updated","Watch Ads minimum 8 seconds. Ticket not added.");setCooldown(COOLDOWN_MS);return}
-  const d=await api("/api/account/me/increment-ad",{method:"POST",body:JSON.stringify({adToken})});pendingAd=null;storage.remove("babydoge_pending_ad");setAccount(d.account);
-  if(Number(d.account.dailyAdsCount)%BREAK_EVERY===0){breakUntil=Date.now()+BREAK_MS;showResult(true,"1 Ticket Added","1 ticket added to your balance. A 5-minute break is now active.")}else showResult(true,"1 Ticket Added","1 ticket added to your balance.");
-  setCooldown(COOLDOWN_MS);
- }catch(e){pendingAd=null;storage.remove("babydoge_pending_ad");showResult(false,"Ticket Not Added",e.message||"Ad could not be verified.");setCooldown(COOLDOWN_MS)}
- finally{adBusy=false;updateAdButton()}
+async function resetAdmin4User(userId){if(!confirm('RESET account '+userId+'? Balance, referrals, ads count will be set to 0 and all withdrawal requests deleted. This cannot be undone.'))return;try{const d=await api('/api/admin/users/'+encodeURIComponent(userId)+'/reset',{method:'POST'});showToast('Account reset. Balance, referrals, ads and withdrawals cleared.');await loadAdmin4Users()}catch(e){showToast(e.message)}}
+async function resetBinanceAccount(){const binanceId=document.getElementById('resetBinanceId').value.trim();if(!binanceId){showToast('Enter Binance ID');return}if(!confirm('WARNING: Set balance to 0, delete withdrawal requests, and reset referral records for this account? This cannot be undone.'))return;try{const d=await api('/api/admin/reset-binance',{method:'POST',body:JSON.stringify({binanceId})});showModal(`<div class="modal center"><h2 class="modal-title">Account reset complete</h2><p class="modal-text">Binance ID: <b>${esc(d.binanceId)}</b><br>Balance: 0<br>Withdrawal requests deleted: ${d.deletedWithdrawals}<br>Referral records deleted: ${d.deletedReferrals}</p><button class="submit-btn" onclick="closeModal();showScreen('admin4')">OK</button></div>`);document.getElementById('resetBinanceId').value=''}catch(e){showToast(e.message)}}
+
+let ticketAdSession='';let ticketAdHiddenAt=0;let ticketAdHiddenMs=0;let ticketAdFinished=false;let ticketCountdownTimer=null;
+function renderTicketBalance(n){const v=fmt(n);['homeTicketBalance','superTicketBalance','earnTicketBalance'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=v})}
+async function loadTicketBalance(){
+  try{
+    const d=await api('/api/tickets/'+encodeURIComponent(userId));
+    renderTicketBalance(Number(d.ticketBalance||0));
+    if(document.getElementById('superOfferHistory'))renderSuperOfferHistory(d.history||[]);
+    const b=document.getElementById('superOfferBtn');
+    if(b){
+      b.classList.remove('loading');
+      if(d.pendingOffer){b.textContent='CLAIM COIN';b.onclick=claimUnlockedSuperOffer;}
+      else{b.textContent='UNLOCK SUPER OFFER';b.onclick=unlockSuperOffer;}
+    }
+  }catch(e){console.warn('Ticket balance:',e.message)}
 }
-async function unlockOffer(){
- if(!account)return;
- if(offerUnlocked){
-  try{const d=await api("/api/account/me/super-offer/claim",{method:"POST",body:"{}"});setAccount(d.account);offerUnlocked=false;showResult(true,"Coin Claimed","+7,500,000 BabyDoge coin added to your balance.");}
-  catch(e){toast(e.message||"Could not claim coin.");renderAll()}
-  return;
- }
- if(Number(account.ticketBalance||0)<OFFER_COST){showResult(false,"Not Enough Tickets","You need 30 tickets to unlock this Super Offer.");return}
- $("unlockOfferBtn").disabled=true;
- try{const d=await api("/api/account/me/super-offer/unlock",{method:"POST",body:"{}"});setAccount(d.account);offerUnlocked=true;showResult(true,"Super Offer Unlocked","30 tickets were deducted. Your Claim Coin button is ready.");}
- catch(e){toast(e.message||"Could not unlock offer.");renderAll()}
+async function loadSuperOffer(){await loadTicketBalance();}
+function renderSuperOfferHistory(history){
+  const el=document.getElementById('superOfferHistory');if(!el)return;
+  if(!history.length){el.innerHTML='<div class="ticket-history-title">Super Offer History</div><div class="empty">No super offer completed yet.</div>';return}
+  el.innerHTML='<div class="ticket-history-title">Super Offer History</div>'+history.map(h=>`<div class="ticket-history-item"><div><div class="ticket-history-main">Super Offer Completed</div><div class="ticket-history-meta">${esc(h.claimedAt?new Date(h.claimedAt).toLocaleString():'—')} · ${fmt(h.ticketCost)} Tickets Used</div></div><div class="ticket-history-reward">+${fmt(h.coinAmount)}</div></div>`).join('');
 }
-async function openAdmin(){hide("profileModal");$("adminError").textContent="";show("adminLoginModal");setTimeout(()=>$("adminPassword").focus(),80)}
-async function adminAuth(){if(adminBusy)return;const p=$("adminPassword").value;if(!p){$("adminError").textContent="Enter password.";return}adminBusy=true;try{const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({password:p})});adminToken=d.adminToken;$("adminPassword").value="";hide("adminLoginModal");show("adminModal");await loadAdmin()}catch(e){$("adminError").textContent=e.message||"Admin login failed"}finally{adminBusy=false}}
-async function loadAdmin(){
- $("adminSummary").textContent="Loading users...";$("adminList").replaceChildren();
- try{const d=await api("/api/admin/users");const users=d.users||[];$("adminSummary").textContent=`${users.length} users · Ads, Super Offers and Referrals only`;
- users.forEach(u=>{const row=document.createElement("div");row.className="user-row";row.innerHTML=`<div class="user-name">${escapeHtml(u.name)}</div><div class="user-detail">Ads watched: <b>${Number(u.adsCount||0).toLocaleString()}</b><br>Super Offers completed: <b>${Number(u.superOffersCompleted||0).toLocaleString()}</b><br>Referrals: <b>${Number(u.referralsCount||0).toLocaleString()}</b></div>`;$("adminList").append(row)})}
- catch(e){$("adminSummary").textContent=e.message||"Could not load users."}
+async function unlockSuperOffer(){
+  const b=document.getElementById('superOfferBtn');if(!b||b.classList.contains('loading'))return;
+  b.classList.add('loading');
+  try{
+    const d=await api('/api/super-offer/unlock',{method:'POST',body:JSON.stringify({userId})});
+    renderTicketBalance(Number(d.ticketBalance||0));
+    b.classList.remove('loading');b.textContent='CLAIM COIN';b.onclick=claimUnlockedSuperOffer;
+    showModal(`<div class="modal center"><div style="font-size:46px">⚡</div><h2 class="modal-title">Super Offer Unlocked</h2><p class="modal-text">30 tickets were deducted. Your <b>7,500,000 BabyDoge</b> reward is ready to claim.</p><button class="ticket-green-btn" onclick="claimUnlockedSuperOffer()">CLAIM COIN</button></div>`);
+  }catch(e){b.classList.remove('loading');showToast(e.message)}
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-$("accountAction").onclick=saveOrCheck;$("nameInput").onkeydown=e=>{if(e.key==="Enter")saveOrCheck()};
-$("offerOpen").onclick=()=>switchPage("offerPage");$("ticketOpen").onclick=()=>switchPage("ticketPage");document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>switchPage("homePage"));
-$("watchTicketBtn").onclick=beginAd;$("unlockOfferBtn").onclick=unlockOffer;
-$("withdrawBtn").onclick=()=>toast("Withdrawal button is ready for your existing withdrawal flow.");
-$("profileBtn").onclick=()=>{if(!account)return accountPopup("check");$("profileInfo").textContent=`${account.name} · ${Number(account.adsCount||0).toLocaleString()} ads · ${Number(account.referralsCount||0).toLocaleString()} referrals`;show("profileModal")};
-$("profileClose").onclick=()=>hide("profileModal");$("adminOpen").onclick=openAdmin;$("adminLogin").onclick=adminAuth;$("adminPassword").onkeydown=e=>{if(e.key==="Enter")adminAuth()};$("adminLoginClose").onclick=()=>hide("adminLoginModal");$("adminRefresh").onclick=loadAdmin;$("adminClose").onclick=()=>hide("adminModal");$("resultClose").onclick=()=>hide("resultModal");
-$("logoutBtn").onclick=async()=>{try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}storage.remove("babydoge_session_token");storage.remove("babydoge_pending_ad");account=null;hide("profileModal");accountPopup("check")};
-["profileModal","adminLoginModal","adminModal","resultModal"].forEach(id=>$(id).onclick=e=>{if(e.target===$(id))hide(id)});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pendingAd)finishAd()});window.addEventListener("focus",()=>{if(pendingAd)finishAd()});window.addEventListener("pageshow",()=>{if(pendingAd)finishAd()});
-try{pendingAd=JSON.parse(storage.get("babydoge_pending_ad")||"null")}catch{pendingAd=null}
-loadSession();
-})();
-</script>
-</body>
-</html>
+async function claimUnlockedSuperOffer(){
+  const b=document.getElementById('superOfferBtn');if(b)b.classList.add('loading');
+  try{
+    const d=await api('/api/super-offer/claim',{method:'POST',body:JSON.stringify({userId})});
+    balance=Number(d.balance||0);const balanceEl=document.getElementById('balance');if(balanceEl)balanceEl.textContent=fmt(balance);
+    renderTicketBalance(Number(d.ticketBalance||0));
+    if(b){b.classList.remove('loading');b.textContent='UNLOCK SUPER OFFER';b.onclick=unlockSuperOffer;}
+    closeModal();await loadTicketBalance();
+    showModal(`<div class="modal center"><div style="font-size:48px">✓</div><h2 class="modal-title">7,500,000 Coin Added</h2><p class="modal-text"><b>7,500,000 BabyDoge</b> has been added to your total balance.</p><button class="ticket-green-btn" onclick="closeModal()">DONE</button></div>`);
+  }catch(e){if(b)b.classList.remove('loading');showToast(e.message)}
+}
+function ticketHiddenTime(){return ticketAdHiddenMs+(ticketAdHiddenAt?Date.now()-ticketAdHiddenAt:0)}
+function startTicketCountdown(){
+  clearInterval(ticketCountdownTimer);
+  const el=document.getElementById('ticketCountdown');
+  ticketCountdownTimer=setInterval(()=>{const left=Math.max(0,Math.ceil((8000-ticketHiddenTime())/1000));if(el)el.textContent=left},200);
+}
+async function watchTicketAd(){
+  const b=document.getElementById('ticketWatchBtn');if(!b||b.classList.contains('loading'))return;
+  try{
+    const d=await api('/api/tickets/ad/start',{method:'POST',body:JSON.stringify({userId})});
+    ticketAdSession=d.sessionId;ticketAdHiddenAt=0;ticketAdHiddenMs=0;ticketAdFinished=false;b.classList.add('loading');
+    const win=window.open(TICKET_AD_URL,'_blank');
+    showModal(`<div class="modal center"><div style="font-size:32px">🎟</div><h2 class="modal-title">Watch Ad</h2><p class="modal-text">Watch the ad for at least <b>8 seconds</b>. Returning early will not add a ticket.</p><div class="ticket-ad-countdown" id="ticketCountdown">8</div><button class="secondary" style="width:100%" onclick="returnFromTicketAd()">I'M BACK</button></div>`);
+    if(!win)showToast('Allow pop-ups to open the ad.');
+    startTicketCountdown();
+  }catch(e){showToast(e.message)}
+}
+async function returnFromTicketAd(){
+  if(!ticketAdSession||ticketAdFinished)return;
+  const hiddenMs=ticketHiddenTime(),hiddenSeconds=Math.floor(hiddenMs/1000);
+  ticketAdFinished=true;clearInterval(ticketCountdownTimer);closeModal();
+  const b=document.getElementById('ticketWatchBtn');if(b)b.classList.remove('loading');
+  if(hiddenMs<8000){
+    ticketAdSession='';
+    showModal(`<div class="modal center"><div style="font-size:34px">⚠️</div><h2 class="modal-title">Watch Ads Minimum 8 Seconds</h2><p class="modal-text">You returned before 8 seconds, so no ticket was added.</p><button class="ticket-green-btn" onclick="closeModal()">CLOSE</button></div>`);
+    return;
+  }
+  try{
+    const d=await api('/api/tickets/ad/claim',{method:'POST',body:JSON.stringify({userId,sessionId:ticketAdSession,hiddenSeconds})});
+    ticketAdSession='';renderTicketBalance(Number(d.ticketBalance||0));
+    showModal(`<div class="modal center"><div style="font-size:48px">🎟</div><h2 class="modal-title">1 Ticket Added</h2><p class="modal-text">1 ticket was added to your balance.</p><div class="ticket-current"><span class="ticket-current-label">Total Tickets</span><span class="ticket-current-value">${fmt(d.ticketBalance)}</span></div><button class="ticket-green-btn" onclick="closeModal()">DONE</button></div>`);
+  }catch(e){ticketAdSession='';showModal(`<h2 class="modal-title">Ticket Not Added</h2><p class="modal-text">${esc(e.message)}</p><button class="secondary" onclick="closeModal()">CLOSE</button>`)}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(ticketAdSession&&!ticketAdFinished){
+    if(document.hidden){if(!ticketAdHiddenAt){ticketAdHiddenAt=Date.now();startTicketCountdown();}}
+    else if(ticketAdHiddenAt){ticketAdHiddenMs+=Date.now()-ticketAdHiddenAt;ticketAdHiddenAt=0;clearInterval(ticketCountdownTimer);}
+  }
+});
+
+let countdownTimer;let adHiddenAt=0;let adHiddenMs=0;let adFinished=false;
+let minerRefreshTimer=null;let minerState={activeMiners:0,hashRate:0,miners:[]};
+
+function hiddenAdTime(){return adHiddenMs+(adHiddenAt?Date.now()-adHiddenAt:0)}
+function validAdsStorageKey(){return 'bd_valid_ads_count_'+encodeURIComponent(userId||'guest')}
+function getValidAdsCount(){return Number(localStorage.getItem(validAdsStorageKey())||0)||0}
+function setValidAdsCount(count){const safe=Math.max(0,Number(count)||0);localStorage.setItem(validAdsStorageKey(),String(safe));renderAdProgress(safe)}
+function renderAdProgress(count=getValidAdsCount()){const n=Math.max(0,Math.min(9,Number(count)||0));const el=document.getElementById('adProgress');if(el)el.textContent=n+'/10'}
+async function syncValidAdsCount(serverCount=0){setValidAdsCount(Number(serverCount)||0)}
+function startCountdown(){clearInterval(countdownTimer);const el=document.getElementById('countdown');countdownTimer=setInterval(()=>{const left=Math.max(0,Math.ceil((8000-hiddenAdTime())/1000));if(el)el.textContent=left;if(left===0&&document.hidden)clearInterval(countdownTimer)},200)}
+
+document.addEventListener('visibilitychange',()=>{
+  if(!adSession||adFinished)return;
+  if(document.hidden){
+    if(!adHiddenAt){adHiddenAt=Date.now();startCountdown();}
+  }else if(adHiddenAt){
+    adHiddenMs+=Date.now()-adHiddenAt;adHiddenAt=0;clearInterval(countdownTimer);returnFromAd(true);
+  }
+});
+
+async function watchAds(){
+  if(document.getElementById('watchBtn').classList.contains('loading'))return;
+  if(getValidAdsCount()>=9){showToast('One more valid ad will activate your miner.');}
+  try{
+    const d=await api('/api/ad/start',{method:'POST',body:JSON.stringify({userId})});
+    adSession=d.sessionId;adHiddenAt=0;adHiddenMs=0;adFinished=false;
+    document.getElementById('watchBtn').classList.add('loading');
+    const win=window.open(AD_URL,'_blank');
+    showModal(`<div class="modal center"><div style="font-size:32px">⏳</div><h2 class="modal-title">Watch Ad</h2><div class="modal-text">Keep the ad open for at least <b>8 seconds</b>. Returning early will not increase your count.</div><div style="font-size:35px;font-weight:900;color:#ffe17b;margin:14px" id="countdown">8</div><button class="secondary" style="width:100%" onclick="returnFromAd()">I'M BACK</button></div>`);
+    if(!win)showToast('Allow pop-ups to open the ad.');
+    startCountdown();
+  }catch(e){document.getElementById('watchBtn').classList.remove('loading');showToast(e.message)}
+}
+
+async function returnFromAd(autoReturn=false){
+  if(!adSession||adFinished)return;
+  const hiddenMs=hiddenAdTime(),hiddenSeconds=Math.floor(hiddenMs/1000);
+  adFinished=true;clearInterval(countdownTimer);closeModal();document.getElementById('watchBtn').classList.remove('loading');
+  if(hiddenMs<8000){
+    adSession='';
+    showModal(`<div class="modal center"><div style="font-size:34px">⚠️</div><h2 class="modal-title">Minimum 8 Seconds Required</h2><p class="modal-text">You returned before 8 seconds. Your ad count was not increased.</p><button class="submit-btn" onclick="closeModal()">CLOSE</button></div>`);
+    return;
+  }
+  try{
+    const d=await api('/api/ad/claim',{method:'POST',body:JSON.stringify({userId,sessionId:adSession,hiddenSeconds})});
+    adSession='';
+    setValidAdsCount(d.validAdsCount||0);
+    balance=Number(d.balance||0);document.getElementById('balance').textContent=fmt(balance);
+    if(d.minerActivated){
+      renderMinerState(d.miner);
+      const added=Number(d.minersActivated||1);
+      const minerWord=added===1?'miner':'miners';
+      const count=Number(d.validAdsCount||0);
+      showModal(`<div class="modal center"><div style="font-size:52px">⚡</div><h2 class="modal-title">${added} ${minerWord} Active</h2><p class="modal-text">You completed enough valid ads to activate ${added} ${minerWord}.</p><div class="gold-line"></div><p class="modal-text"><b>${added} ${minerWord}</b> ${added===1?'is':'are'} now active for <b>30 minutes</b>.</p><p class="modal-text">Mining speed: <b>${fmt(added*1500)} coins / second</b></p><p class="modal-text">Next progress: <b>${count}/10</b></p><button class="submit-btn" onclick="closeModal()">START MINING</button></div>`);
+    }else{
+      const count=Number(d.validAdsCount||0);
+      showModal(`<div class="modal center"><div style="font-size:46px">✓</div><h2 class="modal-title">1 Count Updated</h2><p class="modal-text">Your valid ad count increased by 1.</p><div style="font-size:31px;font-weight:950;color:#ffdf78;margin:12px">${count}/10</div><button class="submit-btn" onclick="closeModal()">CONTINUE</button></div>`);
+    }
+    await loadMinerState();
+  }catch(e){adSession='';showModal(`<h2 class="modal-title">Ad Not Counted</h2><p class="modal-text">${esc(e.message)}</p><button class="secondary" onclick="closeModal()">CLOSE</button>`)}
+}
+
+function renderMinerState(m){
+  minerState=m||{activeMiners:0,hashRate:0,miners:[]};
+  const active=Number(minerState.activeMiners||0),rate=Number(minerState.hashRate||0);
+  const a=document.getElementById('activeMinerCount');if(a)a.textContent=active;
+  const h=document.getElementById('hashRate');if(h)h.textContent=fmt(rate);
+  renderAdProgress(getValidAdsCount());
+}
+async function loadMinerState(){
+  try{
+    const d=await api('/api/miner/state/'+encodeURIComponent(userId));
+    balance=Number(d.balance||0);document.getElementById('balance').textContent=fmt(balance);
+    setValidAdsCount(Number(d.validAdsCount||0));renderMinerState(d.miner);
+  }catch(e){console.warn('Miner state:',e.message)}
+}
+function startMinerPolling(){clearInterval(minerRefreshTimer);minerRefreshTimer=setInterval(loadMinerState,1000)}
+async function submitWithdraw(){const id=document.getElementById('binanceId').value.trim();const amount=Number(document.getElementById('withdrawAmount').value);if(!id){showToast('Please enter your Binance ID');return}if(!Number.isSafeInteger(amount)||amount<MIN_WITHDRAW){showToast('Minimum withdrawal is 2,500,000 coins');return}const b=document.getElementById('submitWithdraw');b.disabled=true;try{const d=await api('/api/withdraw',{method:'POST',body:JSON.stringify({userId,binanceId:id,amount})});balance=d.balance;document.getElementById('balance').textContent=fmt(balance);document.getElementById('binanceId').value='';document.getElementById('withdrawAmount').value='';showToast('Withdrawal request submitted');loadRequests()}catch(e){showToast(e.message)}finally{b.disabled=false}}
+async function loadRequests(){const el=document.getElementById('myRequests');try{const d=await api('/api/withdrawals/'+encodeURIComponent(userId));if(!d.requests.length){el.innerHTML='<div class="empty">No withdrawal requests yet.</div>';return}el.innerHTML=d.requests.map(r=>`<div class="request-item"><div class="req-top"><div class="req-amount">${fmt(r.amount)} BabyDoge</div><span class="status ${r.status}">${esc(r.status)}</span></div><div class="req-meta">Binance ID: ${esc(r.binance_id)}<br>Request ID: ${esc(r.id)}<br>${esc(new Date(r.created_at).toLocaleString())}</div></div>`).join('')}catch(e){el.innerHTML='<div class="empty">Could not load requests.</div>'}}
+function adminLogin(){closeModal();showModal(`<h2 class="modal-title">Admin Authentication</h2><div class="fieldbox"><label>Admin password</label><input type="password" id="adminPass" placeholder="Enter password"></div><button class="submit-btn" onclick="doAdminLogin()">LOGIN</button><button class="secondary" style="width:100%;margin-top:10px" onclick="closeModal()">CANCEL</button>`)}
+async function doAdminLogin(){const p=document.getElementById('adminPass').value;try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:p})});adminToken=d.token;closeModal();showScreen('admin')}catch(e){showToast(e.message)}}
+async function loadAdmin(){const el=document.getElementById('adminRequests');try{const d=await api('/api/admin/withdrawals');if(!d.requests.length){el.innerHTML='<div class="empty">No withdrawal requests.</div>';return}el.innerHTML=d.requests.map(r=>`<div class="admin-row"><div class="req-top"><b class="req-amount">${fmt(r.amount)} BabyDoge</b><span class="status ${r.status}">${esc(r.status)}</span></div><div class="req-meta">User: ${esc(r.user_id)}<br>Binance ID: ${esc(r.binance_id)}<br>Request: #${esc(r.id)}<br>Created: ${esc(new Date(r.created_at).toLocaleString())}</div><select onchange="changeStatus(${r.id},this.value)"><option value="" selected disabled>Change status…</option><option value="pending">Pending</option><option value="complete">Complete</option><option value="reject">Reject</option></select></div>`).join('')}catch(e){el.innerHTML=`<div class="empty">${esc(e.message)} <button onclick="adminLogin()">Login again</button></div>`}}
+async function changeStatus(id,status){try{await api('/api/admin/withdrawals/'+id,{method:'PATCH',body:JSON.stringify({status})});showToast('Status updated');loadAdmin()}catch(e){showToast(e.message)}}
+document.querySelectorAll('.coin-img').forEach(img=>img.src=COIN_SRC);
+renderAdProgress();
+refresh();
+loadMinerState();
+startMinerPolling();
+loadTasks();
+loadReferral();
+loadTicketBalance();
+processReferral();
+</script></body></html>
